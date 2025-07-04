@@ -1,73 +1,155 @@
-# Welcome to your Lovable project
+# Chatterbox - Worldcoin Mini App Messaging
 
-## Project info
+A modern messaging application built as a Worldcoin Mini App that allows users to send messages and money seamlessly. Messages are stored in Walrus for persistent, searchable conversation history.
 
-**URL**: https://lovable.dev/projects/4e931db1-1394-4f3b-b434-16f0b663d05d
+## Features
 
-## How can I edit this code?
+### 💬 Messaging
+- Real-time messaging between users
+- Message history stored in Walrus for persistence
+- Search functionality across conversations
+- Modern, responsive UI with shadcn/ui components
 
-There are several ways of editing your application.
+### 💰 Payments
+- Send WLD and USDC payments directly in conversations
+- Integration with Worldcoin MiniKit for secure payments
+- Payment status tracking (pending, success, failed)
+- Payment history in message threads
 
-**Use Lovable**
+### 👥 User Management
+- Worldcoin username integration
+- User profiles with avatars
+- Conversation management
+- Contact discovery via Worldcoin addresses
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4e931db1-1394-4f3b-b434-16f0b663d05d) and start prompting.
+## Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React + TypeScript + Vite
+- **UI**: shadcn/ui + Tailwind CSS
+- **State Management**: React Context + React Query
+- **Payments**: Worldcoin MiniKit
+- **Storage**: Walrus AI for message persistence
+- **Routing**: React Router
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Install dependencies:
+```bash
+npm install
+```
 
-Follow these steps:
+2. Set up environment variables:
+```bash
+# Create .env file
+VITE_WALRUS_API_KEY=your_walrus_api_key
+VITE_WALRUS_PROJECT_ID=your_walrus_project_id
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Development
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Start the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Worldcoin Integration
 
-**Use GitHub Codespaces**
+### MiniKit Setup
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The app integrates with Worldcoin MiniKit for:
+- User authentication via World App
+- Secure payment processing
+- Username resolution
 
-## What technologies are used for this project?
+### Payment Flow
 
-This project is built with:
+1. **Initiate Payment**: Generate unique reference ID
+2. **Send Payment**: Use MiniKit to process payment
+3. **Verify Payment**: Confirm transaction status
+4. **Store Message**: Save payment message to Walrus
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Supported Tokens
 
-## How can I deploy this project?
+- **WLD**: Worldcoin's native token
+- **USDC**: USD Coin stablecoin
 
-Simply open [Lovable](https://lovable.dev/projects/4e931db1-1394-4f3b-b434-16f0b663d05d) and click on Share -> Publish.
+## Walrus Integration
 
-## Can I connect a custom domain to my Lovable project?
+### Message Storage
 
-Yes, you can!
+All messages are stored in Walrus collections:
+- **Collection**: `messages`
+- **Metadata**: conversationId, senderId, messageType
+- **Search**: Full-text search across conversations
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Message Types
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Text Messages**: Regular chat messages
+- **Payment Messages**: Payment transactions with status tracking
+
+## Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── ConversationList.tsx
+│   ├── ChatInterface.tsx
+│   ├── MessageBubble.tsx
+│   └── MessagingApp.tsx
+├── contexts/           # React contexts
+│   └── MessagingContext.tsx
+├── services/           # Business logic
+│   ├── worldcoinService.ts
+│   └── walrusService.ts
+├── types/              # TypeScript types
+│   └── messaging.ts
+└── api/               # API endpoints
+    └── initiate-payment.ts
+```
+
+## API Endpoints
+
+### Payment Endpoints
+
+- `POST /api/initiate-payment`: Generate payment reference
+- `POST /api/confirm-payment`: Verify payment status
+
+## Development Notes
+
+### Mock Services
+
+For development, the app uses mock implementations of:
+- **Worldcoin MiniKit**: Simulates payment processing
+- **Walrus Client**: In-memory storage for testing
+
+### Production Setup
+
+To deploy to production:
+
+1. Replace mock services with real implementations
+2. Configure Walrus API credentials
+3. Set up Worldcoin Mini App in Developer Portal
+4. Configure payment whitelist addresses
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Support
+
+For support or questions:
+- Create an issue in this repository
+- Check the Worldcoin documentation
+- Review Walrus AI documentation

@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from '@worldcoin/minikit-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
-import MessagingApp from "../components/MessagingApp";
+import { MessagingApp } from "../components/MessagingApp";
 
 const Index = () => {
   const [isVerified, setIsVerified] = useState<boolean>(false);
