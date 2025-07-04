@@ -1,12 +1,15 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
+import MoneyActions from "./MoneyActions";
 
 interface MessageInputProps {
   onSendMessage: (text: string) => void;
+  onSendMoney: (amount: number) => void;
+  onRequestMoney: (amount: number) => void;
 }
 
-const MessageInput = ({ onSendMessage }: MessageInputProps) => {
+const MessageInput = ({ onSendMessage, onSendMoney, onRequestMoney }: MessageInputProps) => {
   const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,6 +50,7 @@ const MessageInput = ({ onSendMessage }: MessageInputProps) => {
       >
         <Send className="h-4 w-4 md:h-5 md:w-5" />
       </button>
+      <MoneyActions onSendMoney={onSendMoney} onRequestMoney={onRequestMoney} />
     </form>
   );
 };

@@ -1,9 +1,12 @@
-
 export interface Message {
   id: string;
   text: string;
   timestamp: number;
   sender: "user";
+  type?: "text" | "money_request" | "money_sent";
+  amount?: number;
+  currency?: string;
+  status?: "pending" | "completed" | "cancelled";
 }
 
 export interface Conversation {

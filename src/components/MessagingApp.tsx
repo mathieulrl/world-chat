@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
@@ -37,6 +38,7 @@ const MessagingApp = () => {
       text,
       timestamp: Date.now(),
       sender: "user",
+      type: "text",
     };
 
     const updatedConversations = conversations.map(conversation => {
@@ -44,6 +46,101 @@ const MessagingApp = () => {
         return {
           ...conversation,
           messages: [...conversation.messages, newMessage],
+          lastMessageTime: Date.now(),
+        };
+      }
+      return conversation;
+    });
+
+    setConversations(updatedConversations);
+    saveConversations(updatedConversations);
+  };
+
+  const sendMoney = (amount: number) => {
+    if (!activeConversationId) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: "",
+      timestamp: Date.now(),
+      sender: "user",
+      type: "money_sent",
+      amount,
+      currency: "usd",
+      status: "completed",
+    };
+
+    const updatedConversations = conversations.map(conversation => {
+      if (conversation.id === activeConversationId) {
+        return {
+          ...conversation,
+          messages: [...conversation.messages, newMessage],
+          lastMessageTime: Date.now(),
+        };
+      }
+      return conversation;
+    });
+
+    setConversations(updatedConversations);
+    saveConversations(updatedConversations);
+  };
+
+  const requestMoney = (amount: number) => {
+    if (!activeConversationId) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: "",
+      timestamp: Date.now(),
+      sender: "user",
+      type: "money_request",
+      amount,
+      currency: "usd",
+      status: "pending",
+    };
+
+    const updatedConversations = conversations.map(conversation => {
+      if (conversation.id === activeConversationId) {
+        return {
+          ...conversation,
+          messages: [...conversation.messages, newMessage],
+          lastMessageTime: Date.now(),
+        };
+      }
+      return conversation;
+    });
+
+    setConversations(updatedConversations);
+    saveConversations(updatedConversations);
+  };
+
+  const payRequest = (messageId: string, amount: number) => {
+    if (!activeConversationId) return;
+
+    const updatedConversations = conversations.map(conversation => {
+      if (conversation.id === activeConversationId) {
+        const updatedMessages = conversation.messages.map(msg => {
+          if (msg.id === messageId) {
+            return { ...msg, status: "completed" as const };
+          }
+          return msg;
+        });
+
+        // Add a payment confirmation message
+        const paymentMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: "",
+          timestamp: Date.now(),
+          sender: "user",
+          type: "money_sent",
+          amount,
+          currency: "usd",
+          status: "completed",
+        };
+
+        return {
+          ...conversation,
+          messages: [...updatedMessages, paymentMessage],
           lastMessageTime: Date.now(),
         };
       }
@@ -172,14 +269,22 @@ const MessagingApp = () => {
                 </div>
               ) : (
                 activeConversation.messages.map((message) => (
-                  <MessageBubble key={message.id} message={message} />
+                  <MessageBubble 
+                    key={message.id} 
+                    message={message} 
+                    onPayRequest={payRequest}
+                  />
                 ))
               )}
             </div>
 
             {/* Input Area */}
             <div className="bg-white border-t p-3 md:p-4">
-              <MessageInput onSendMessage={addMessage} />
+              <MessageInput 
+                onSendMessage={addMessage} 
+                onSendMoney={sendMoney}
+                onRequestMoney={requestMoney}
+              />
             </div>
           </>
         ) : (
