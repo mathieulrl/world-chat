@@ -41,9 +41,9 @@ const MoneyActions = ({ onSendMoney, onRequestMoney }: MoneyActionsProps) => {
 
   if (showSendForm) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-gray-900">Send Money</h3>
+      <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-lg min-w-[280px] md:min-w-[320px]">
+        <div className="flex items-center justify-between mb-2 md:mb-3">
+          <h3 className="font-medium text-gray-900 text-sm md:text-base">Send Money</h3>
           <button
             onClick={() => {
               resetForms();
@@ -60,14 +60,14 @@ const MoneyActions = ({ onSendMoney, onRequestMoney }: MoneyActionsProps) => {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-2 md:px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             step="0.01"
             min="0"
           />
           <button
             onClick={handleSendMoney}
             disabled={!amount || parseFloat(amount) <= 0}
-            className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-md transition-colors"
+            className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-3 md:px-4 py-2 rounded-md transition-colors text-sm"
           >
             Send
           </button>
@@ -78,9 +78,9 @@ const MoneyActions = ({ onSendMoney, onRequestMoney }: MoneyActionsProps) => {
 
   if (showRequestForm) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-gray-900">Request Money</h3>
+      <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-lg min-w-[280px] md:min-w-[320px]">
+        <div className="flex items-center justify-between mb-2 md:mb-3">
+          <h3 className="font-medium text-gray-900 text-sm md:text-base">Request Money</h3>
           <button
             onClick={() => {
               resetForms();
@@ -97,14 +97,14 @@ const MoneyActions = ({ onSendMoney, onRequestMoney }: MoneyActionsProps) => {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-2 md:px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             step="0.01"
             min="0"
           />
           <button
             onClick={handleRequestMoney}
             disabled={!amount || parseFloat(amount) <= 0}
-            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-md transition-colors"
+            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-3 md:px-4 py-2 rounded-md transition-colors text-sm"
           >
             Request
           </button>
@@ -116,20 +116,20 @@ const MoneyActions = ({ onSendMoney, onRequestMoney }: MoneyActionsProps) => {
   return (
     <div className="relative">
       {isOpen && (
-        <div className="absolute bottom-12 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[140px]">
+        <div className="absolute bottom-12 left-0 bg-white border border-gray-200 rounded-lg shadow-lg p-1 md:p-2 min-w-[120px] md:min-w-[140px]">
           <button
             onClick={() => setShowSendForm(true)}
-            className="w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
+            className="w-full flex items-center space-x-2 px-2 md:px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
           >
             <Upload className="h-4 w-4 text-green-500" />
-            <span className="text-sm">Send Money</span>
+            <span className="text-xs md:text-sm">Send Money</span>
           </button>
           <button
             onClick={() => setShowRequestForm(true)}
-            className="w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
+            className="w-full flex items-center space-x-2 px-2 md:px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
           >
             <Download className="h-4 w-4 text-blue-500" />
-            <span className="text-sm">Request Money</span>
+            <span className="text-xs md:text-sm">Request Money</span>
           </button>
         </div>
       )}

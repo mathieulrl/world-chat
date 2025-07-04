@@ -29,6 +29,7 @@ const MessageInput = ({ onSendMessage, onSendMoney, onRequestMoney }: MessageInp
 
   return (
     <form onSubmit={handleSubmit} className="flex space-x-2 md:space-x-3">
+      <MoneyActions onSendMoney={onSendMoney} onRequestMoney={onRequestMoney} />
       <div className="flex-1">
         <textarea
           value={message}
@@ -50,7 +51,6 @@ const MessageInput = ({ onSendMessage, onSendMoney, onRequestMoney }: MessageInp
       >
         <Send className="h-4 w-4 md:h-5 md:w-5" />
       </button>
-      <MoneyActions onSendMoney={onSendMoney} onRequestMoney={onRequestMoney} />
     </form>
   );
 };
