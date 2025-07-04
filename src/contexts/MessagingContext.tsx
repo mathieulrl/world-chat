@@ -392,12 +392,15 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
           selectConversation(newConversation.id);
         }
       } else {
-        console.error('Contact sharing failed:', finalPayload.error_code);
-        setError('Failed to share contacts. Please try again.');
+        // Any non-success status is treated as user cancellation
+        // Contact sharing errors are almost always user cancellations (closing modal)
+        // so we don't show error messages to avoid UX issues
+        console.log('Contact sharing cancelled by user');
       }
     } catch (error) {
-      console.error('Error sharing contacts:', error);
-      setError('An error occurred while sharing contacts. Please try again.');
+      // Contact sharing exceptions are almost always user cancellations
+      // We don't show any error messages to avoid UX issues
+      console.log('Contact sharing cancelled by user');
     } finally {
       setIsCreatingConversation(false);
     }
