@@ -22,8 +22,7 @@ const Index = () => {
   }, []);
 
   const verifyPayload: VerifyCommandInput = {
-    action: 'voting-action', // This is your action ID from the Developer Portal
-    signal: '0x12312', // Optional additional data
+    action: 'chat', // This is your action ID from the Developer Portal
     verification_level: VerificationLevel.Orb, // Orb | Device
   };
 
@@ -57,8 +56,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           payload: finalPayload as ISuccessResult,
-          action: 'voting-action',
-          signal: '0x12312',
+          action: 'chat',
         }),
       });
 
