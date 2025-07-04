@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { MiniKit } from '@worldcoin/minikit-js';
 import { Message, Conversation, User, PaymentRequest, MoneyRequest } from '../types/messaging';
 import { WalrusMessageService } from '../services/walrusService';
 import { WorldcoinService } from '../services/worldcoinService';
@@ -18,10 +19,12 @@ interface MessagingContextType {
   acceptMoneyRequest: (messageId: string, conversationId: string) => Promise<void>;
   declineMoneyRequest: (messageId: string, conversationId: string) => Promise<void>;
   createConversation: (participants: User[]) => Promise<Conversation>;
+  createConversationWithContacts: () => Promise<void>;
   selectConversation: (conversationId: string) => void;
   searchMessages: (query: string) => Promise<Message[]>;
   loadMessages: (conversationId: string) => Promise<void>;
   loadConversations: () => Promise<void>;
+  isCreatingConversation: boolean;
 }
 
 const MessagingContext = createContext<MessagingContextType | undefined>(undefined);
@@ -45,6 +48,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
   const walrusService = WalrusMessageService.getInstance();
   const worldcoinService = WorldcoinService.getInstance();
@@ -353,6 +357,52 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     return conversation;
   };
 
+  const createConversationWithContacts = useCallback(async () => {
+    if (!MiniKit.isInstalled()) {
+      setError('World App is not installed. Please install World App to share contacts.');
+      return;
+    }
+
+    setIsCreatingConversation(true);
+    setError(null);
+
+    try {
+      const shareContactsPayload = {
+        isMultiSelectEnabled: true,
+        inviteMessage: "Join me on this secure chat app!",
+      };
+
+      const { finalPayload } = await MiniKit.commandsAsync.shareContacts(shareContactsPayload);
+
+      if (finalPayload.status === 'success') {
+        const worldAppContacts = finalPayload.contacts;
+        
+        // Convert World App contacts to User objects
+        const selectedUsers: User[] = worldAppContacts.map(contact => ({
+          id: contact.walletAddress,
+          username: contact.username,
+          address: contact.walletAddress,
+          profilePicture: contact.profilePictureUrl || undefined,
+        }));
+
+        // Create conversation with selected contacts
+        if (currentUser && selectedUsers.length > 0) {
+          const allParticipants = [currentUser, ...selectedUsers];
+          const newConversation = await createConversation(allParticipants);
+          selectConversation(newConversation.id);
+        }
+      } else {
+        console.error('Contact sharing failed:', finalPayload.error_code);
+        setError('Failed to share contacts. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sharing contacts:', error);
+      setError('An error occurred while sharing contacts. Please try again.');
+    } finally {
+      setIsCreatingConversation(false);
+    }
+  }, [currentUser]);
+
   const selectConversation = (conversationId: string) => {
     const conversation = conversations.find(c => c.id === conversationId);
     if (conversation) {
@@ -383,10 +433,12 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     acceptMoneyRequest,
     declineMoneyRequest,
     createConversation,
+    createConversationWithContacts,
     selectConversation,
     searchMessages,
     loadMessages,
     loadConversations,
+    isCreatingConversation,
   };
 
   return (

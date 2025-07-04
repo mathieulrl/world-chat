@@ -1,20 +1,29 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { useMessaging } from '../contexts/MessagingContext';
-import { MessageCircle, Send } from 'lucide-react';
+import { Conversation } from '../types/messaging';
+import { MessageCircle, Send, Plus, Loader2 } from 'lucide-react';
 
 export const ConversationList: React.FC = () => {
-  const { conversations, currentConversation, selectConversation, currentUser } = useMessaging();
+  const { 
+    conversations, 
+    currentConversation, 
+    selectConversation, 
+    currentUser, 
+    createConversationWithContacts,
+    isCreatingConversation 
+  } = useMessaging();
 
-  const getOtherParticipant = (conversation: any) => {
+  const getOtherParticipant = (conversation: Conversation) => {
     if (!currentUser) return null;
-    return conversation.participants.find((p: any) => p.id !== currentUser.id);
+    return conversation.participants.find((p) => p.id !== currentUser.id);
   };
 
-  const getLastMessagePreview = (conversation: any) => {
+  const getLastMessagePreview = (conversation: Conversation) => {
     if (!conversation.lastMessage) return 'No messages yet';
     
     if (conversation.lastMessage.messageType === 'payment') {
@@ -42,12 +51,50 @@ export const ConversationList: React.FC = () => {
   return (
     <div className="w-80 border-r border-border bg-background">
       <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold">Conversations</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Conversations</h2>
+          <Button
+            onClick={createConversationWithContacts}
+            disabled={isCreatingConversation}
+            size="sm"
+            className="flex items-center space-x-1"
+          >
+            {isCreatingConversation ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">
+              {isCreatingConversation ? 'Selecting...' : 'New Chat'}
+            </span>
+          </Button>
+        </div>
       </div>
       
       <ScrollArea className="h-[calc(100vh-80px)]">
         <div className="p-2">
-          {conversations.map((conversation) => {
+          {conversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+              <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No conversations yet</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Start chatting with your World App contacts
+              </p>
+              <Button
+                onClick={createConversationWithContacts}
+                disabled={isCreatingConversation}
+                className="flex items-center space-x-2"
+              >
+                {isCreatingConversation ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                <span>{isCreatingConversation ? 'Selecting Contacts...' : 'Start New Chat'}</span>
+              </Button>
+            </div>
+          ) : (
+            conversations.map((conversation) => {
             const otherParticipant = getOtherParticipant(conversation);
             const isSelected = currentConversation?.id === conversation.id;
             
@@ -105,7 +152,8 @@ export const ConversationList: React.FC = () => {
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </div>
       </ScrollArea>
     </div>
