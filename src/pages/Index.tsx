@@ -43,7 +43,7 @@ const Index = () => {
       
       if (finalPayload.status === 'error') {
         setVerificationStatus('error');
-        setErrorMessage('Verification failed. Please try again.');
+        setErrorMessage(`Verification failed: ${JSON.stringify(finalPayload)}`);
         console.log('Error payload', finalPayload);
         return;
       }
@@ -60,7 +60,16 @@ const Index = () => {
         }),
       });
 
+      if (!verifyResponse.ok) {
+        const errorText = await verifyResponse.text();
+        console.error('API Error:', errorText);
+        setVerificationStatus('error');
+        setErrorMessage(`Server error (${verifyResponse.status}): ${errorText || 'Unknown error'}`);
+        return;
+      }
+
       const verifyResponseJson = await verifyResponse.json();
+      console.log('API Response:', verifyResponseJson);
       
       if (verifyResponseJson.status === 200) {
         setVerificationStatus('success');
@@ -72,11 +81,12 @@ const Index = () => {
         console.log('Verification success!');
       } else {
         setVerificationStatus('error');
-        setErrorMessage('Server verification failed. Please try again.');
+        setErrorMessage(`Server verification failed: ${verifyResponseJson.message || 'Unknown error'}`);
       }
     } catch (error) {
       setVerificationStatus('error');
-      setErrorMessage('An unexpected error occurred. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setErrorMessage(`Error: ${errorMessage}`);
       console.error('Verification error:', error);
     } finally {
       setIsLoading(false);
@@ -155,6 +165,20 @@ const Index = () => {
 
           <div className="text-center text-sm text-muted-foreground">
             <p>Make sure you have the World App installed on your device.</p>
+          </div>
+          
+          {/* Temporary bypass for testing */}
+          <div className="pt-4 border-t">
+            <Button 
+              onClick={() => {
+                localStorage.setItem('worldapp_verified', 'true');
+                setIsVerified(true);
+              }}
+              variant="ghost"
+              className="w-full text-xs"
+            >
+              Skip verification (for testing)
+            </Button>
           </div>
         </CardContent>
       </Card>
