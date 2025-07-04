@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
 import { Message, Conversation, User, PaymentRequest, MoneyRequest } from '../types/messaging';
-import { WalrusMessageService } from '../services/walrusService';
+import { DecentralizedMessagingService } from '../services/decentralizedMessagingService';
 import { WorldcoinService } from '../services/worldcoinService';
 
 interface MessagingContextType {
@@ -50,7 +50,19 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
   const [error, setError] = useState<string | null>(null);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
-  const walrusService = WalrusMessageService.getInstance();
+  // Initialize decentralized messaging service
+  const decentralizedService = new DecentralizedMessagingService({
+    walrus: {
+      aggregatorUrl: 'https://walrus-aggregator.testnet.mystenlabs.com',
+      publisherUrl: 'https://walrus-publisher.testnet.mystenlabs.com',
+      network: 'testnet',
+    },
+    smartContract: {
+      contractAddress: '0xA27F6614c53ce3c4E7ac92A64d03bA1853e3c304', // Updated contract address
+      network: 'testnet',
+    },
+  });
+
   const worldcoinService = WorldcoinService.getInstance();
 
   useEffect(() => {
@@ -68,7 +80,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       }
 
       // Get current user
-      const user = worldcoinService.getCurrentUser();
+      const user = await worldcoinService.getCurrentUser();
       if (user) {
         const currentUserData: User = {
           id: user.address,
@@ -98,32 +110,24 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         return;
       }
 
-      // For now, we'll create mock conversations
-      // In a real app, you'd fetch this from your backend
-      const mockConversations: Conversation[] = [
-        {
-          id: '1',
-          participants: [
-            userToUse,
-            { id: '2', username: 'alice.world', address: '0x1234567890123456789012345678901234567890', profilePicture: 'https://via.placeholder.com/40' }
-          ],
-          unreadCount: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: '2',
-          participants: [
-            userToUse,
-            { id: '3', username: 'bob.world', address: '0x4567890123456789012345678901234567890123', profilePicture: 'https://via.placeholder.com/40' }
-          ],
-          unreadCount: 2,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
+      // Get real conversations from decentralized service
+      const realConversations = await decentralizedService.getUserConversations(userToUse.address);
       
-      setConversations(mockConversations);
+      // Convert to Conversation format expected by the UI
+      const conversations: Conversation[] = realConversations.map((conv: any) => ({
+        id: conv.id,
+        participants: conv.participants.map((addr: string) => ({
+          id: addr,
+          username: addr, // You can enhance this with user lookup
+          address: addr,
+          profilePicture: 'https://via.placeholder.com/40'
+        })),
+        unreadCount: 0, // You can implement unread logic if needed
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt,
+      }));
+      
+      setConversations(conversations);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load conversations');
     }
@@ -132,7 +136,9 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
   const loadMessages = async (conversationId: string) => {
     try {
       setIsLoading(true);
-      const conversationMessages = await walrusService.getMessages(conversationId);
+      
+      // Use decentralized service to get messages
+      const conversationMessages = await decentralizedService.getConversationMessages(conversationId);
       setMessages(conversationMessages.reverse()); // Show oldest first
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load messages');
@@ -157,8 +163,13 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         messageType: 'text',
       };
 
-      // Store in Walrus
-      await walrusService.storeMessage(message);
+      // Store in decentralized system (Walrus + Smart Contract)
+      const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
+        message,
+        currentUser.address
+      );
+
+      console.log(`Message sent! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
 
       // Update local state
       setMessages(prev => [...prev, message]);
@@ -199,44 +210,46 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         description: `Payment from ${currentUser.username}`,
       };
 
-      // Send payment
-      const paymentResult = await worldcoinService.sendPayment(paymentRequest);
+      // Execute payment
+      const paymentResult = await worldcoinService.executePayment(paymentRequest);
+      console.log('Payment executed:', paymentResult);
 
-      if (paymentResult.status === 'success') {
-        // Confirm payment
-        await worldcoinService.confirmPayment(paymentResult);
+      // Create payment message
+      const paymentMessage: Message = {
+        id: crypto.randomUUID(),
+        conversationId,
+        senderId: currentUser.id,
+        content: `Sent ${amount} ${token} to ${recipientAddress}`,
+        timestamp: new Date(),
+        messageType: 'payment',
+        paymentData: {
+          amount,
+          token,
+          recipientAddress,
+          transactionHash: paymentResult.transactionHash || 'pending',
+          status: 'completed',
+        },
+      };
 
-        // Create payment message
-        const message: Message = {
-          id: crypto.randomUUID(),
-          conversationId,
-          senderId: currentUser.id,
-          content: `Sent ${amount} ${token}`,
-          timestamp: new Date(),
-          messageType: 'payment',
-          paymentAmount: amount,
-          paymentToken: token,
-          paymentReference: reference,
-          paymentStatus: 'success',
-        };
+      // Store payment message in decentralized system
+      const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
+        paymentMessage,
+        currentUser.address
+      );
 
-        // Store in Walrus
-        await walrusService.storeMessage(message);
+      console.log(`Payment message stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
 
-        // Update local state
-        setMessages(prev => [...prev, message]);
+      // Update local state
+      setMessages(prev => [...prev, paymentMessage]);
 
-        // Update conversation
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === conversationId 
-              ? { ...conv, lastMessage: message, updatedAt: new Date() }
-              : conv
-          )
-        );
-      } else {
-        throw new Error('Payment failed');
-      }
+      // Update conversation
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, lastMessage: paymentMessage, updatedAt: new Date() }
+            : conv
+        )
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send payment');
     } finally {
@@ -251,30 +264,44 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     }
 
     try {
-      const requestId = crypto.randomUUID();
-      const message: Message = {
-        id: requestId,
-        conversationId,
-        senderId: currentUser.id,
-        content: `Requested ${amount} ${token}${description ? `: ${description}` : ''}`,
-        timestamp: new Date(),
-        messageType: 'payment_request',
-        paymentAmount: amount,
-        paymentToken: token,
-        requestStatus: 'pending',
+      // Create money request message
+      const moneyRequest: MoneyRequest = {
+        id: crypto.randomUUID(),
+        amount,
+        token,
+        description,
+        requesterId: currentUser.id,
+        requesterAddress: currentUser.address,
+        status: 'pending',
+        createdAt: new Date(),
       };
 
-      // Store in Walrus
-      await walrusService.storeMessage(message);
+      const requestMessage: Message = {
+        id: crypto.randomUUID(),
+        conversationId,
+        senderId: currentUser.id,
+        content: `Requested ${amount} ${token}: ${description}`,
+        timestamp: new Date(),
+        messageType: 'payment_request',
+        moneyRequestData: moneyRequest,
+      };
+
+      // Store money request message in decentralized system
+      const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
+        requestMessage,
+        currentUser.address
+      );
+
+      console.log(`Money request stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
 
       // Update local state
-      setMessages(prev => [...prev, message]);
+      setMessages(prev => [...prev, requestMessage]);
 
       // Update conversation
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId 
-            ? { ...conv, lastMessage: message, updatedAt: new Date() }
+            ? { ...conv, lastMessage: requestMessage, updatedAt: new Date() }
             : conv
         )
       );
@@ -290,62 +317,111 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     }
 
     try {
-      // Find the request message
-      const requestMessage = messages.find(m => m.id === messageId);
-      if (!requestMessage || requestMessage.messageType !== 'payment_request') {
-        throw new Error('Invalid money request');
+      setIsLoading(true);
+
+      // Find the money request message
+      const requestMessage = messages.find(msg => msg.id === messageId);
+      if (!requestMessage || !requestMessage.moneyRequestData) {
+        throw new Error('Money request not found');
       }
 
-      // Find the requester (the person who sent the request)
-      const requester = currentConversation?.participants.find(p => p.id === requestMessage.senderId);
-      if (!requester) {
-        throw new Error('Requester not found');
-      }
+      const { amount, token, requesterAddress } = requestMessage.moneyRequestData;
 
-      // Update request status to accepted
-      await walrusService.updateMessageStatus(messageId, 'accepted');
+      // Execute payment to the requester
+      const { id: reference } = await worldcoinService.initiatePayment();
+      const paymentRequest: PaymentRequest = {
+        reference,
+        to: requesterAddress,
+        tokens: [{
+          symbol: token,
+          token_amount: worldcoinService.tokenToDecimals(amount, token),
+        }],
+        description: `Payment for money request`,
+      };
 
-      // Send the actual payment to the requester
-      await sendPayment(
-        requestMessage.paymentAmount!,
-        requestMessage.paymentToken!,
-        requester.address, // Send to the requester's address
-        conversationId
+      const paymentResult = await worldcoinService.executePayment(paymentRequest);
+      console.log('Payment executed for money request:', paymentResult);
+
+      // Create acceptance message
+      const acceptanceMessage: Message = {
+        id: crypto.randomUUID(),
+        conversationId,
+        senderId: currentUser.id,
+        content: `Accepted money request: ${amount} ${token}`,
+        timestamp: new Date(),
+        messageType: 'payment',
+        paymentData: {
+          amount,
+          token,
+          recipientAddress: requesterAddress,
+          transactionHash: paymentResult.transactionHash || 'pending',
+          status: 'completed',
+        },
+      };
+
+      // Store acceptance message in decentralized system
+      const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
+        acceptanceMessage,
+        currentUser.address
       );
 
-      // Update the request message status
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId 
-            ? { ...msg, requestStatus: 'accepted' }
-            : msg
-        )
+      console.log(`Acceptance message stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
+
+      // Update the original request status
+      const updatedMessages = messages.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, moneyRequestData: { ...msg.moneyRequestData!, status: 'accepted' } }
+          : msg
       );
+      setMessages(updatedMessages as Message[]);
+
+      // Add acceptance message
+      setMessages(prev => [...prev, acceptanceMessage]);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept money request');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const declineMoneyRequest = async (messageId: string, conversationId: string) => {
     try {
-      // Update request status
-      await walrusService.updateMessageStatus(messageId, 'declined');
-
-      // Update the request message status
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId 
-            ? { ...msg, requestStatus: 'declined' }
-            : msg
-        )
+      // Update the request status
+      const updatedMessages = messages.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, moneyRequestData: { ...msg.moneyRequestData!, status: 'declined' } }
+          : msg
       );
+      setMessages(updatedMessages as Message[]);
+
+      // Create decline message
+      const declineMessage: Message = {
+        id: crypto.randomUUID(),
+        conversationId,
+        senderId: currentUser!.id,
+        content: 'Declined money request',
+        timestamp: new Date(),
+        messageType: 'text',
+      };
+
+      // Store decline message in decentralized system
+      const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
+        declineMessage,
+        currentUser!.address
+      );
+
+      console.log(`Decline message stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
+
+      // Add decline message
+      setMessages(prev => [...prev, declineMessage]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to decline money request');
     }
   };
 
   const createConversation = async (participants: User[]): Promise<Conversation> => {
-    const conversation: Conversation = {
+    const newConversation: Conversation = {
       id: crypto.randomUUID(),
       participants,
       unreadCount: 0,
@@ -353,67 +429,56 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       updatedAt: new Date(),
     };
 
-    setConversations(prev => [...prev, conversation]);
-    return conversation;
+    setConversations(prev => [...prev, newConversation]);
+    return newConversation;
   };
 
-  const createConversationWithContacts = useCallback(async () => {
-    if (!MiniKit.isInstalled()) {
-      setError('World App is not installed. Please install World App to share contacts.');
-      return;
-    }
-
-    setIsCreatingConversation(true);
-    setError(null);
-
+  const createConversationWithContacts = async () => {
     try {
-      const shareContactsPayload = {
-        isMultiSelectEnabled: true,
-        inviteMessage: "Join me on this secure chat app!",
-      };
-
-      const { finalPayload } = await MiniKit.commandsAsync.shareContacts(shareContactsPayload);
-
-      if (finalPayload.status === 'success') {
-        const worldAppContacts = finalPayload.contacts;
-        
-        // Convert World App contacts to User objects
-        const selectedUsers: User[] = worldAppContacts.map(contact => ({
-          id: contact.walletAddress,
-          username: contact.username,
-          address: contact.walletAddress,
-          profilePicture: contact.profilePictureUrl || undefined,
-        }));
-
-        // Create conversation with selected contacts
-        if (currentUser && selectedUsers.length > 0) {
-          const allParticipants = [currentUser, ...selectedUsers];
-          const newConversation = await createConversation(allParticipants);
-          selectConversation(newConversation.id);
-        }
-      } else {
-        console.error('Contact sharing failed:', finalPayload.error_code);
-        setError('Failed to share contacts. Please try again.');
+      setIsCreatingConversation(true);
+      
+      // Get contacts from World App
+      const contacts = await worldcoinService.getContacts();
+      
+      if (contacts.length === 0) {
+        setError('No contacts found. Please add contacts in World App.');
+        return;
       }
-    } catch (error) {
-      console.error('Error sharing contacts:', error);
-      setError('An error occurred while sharing contacts. Please try again.');
+
+      // Create conversation with first contact
+      const firstContact = contacts[0];
+      const newConversation = await createConversation([
+        currentUser!,
+        {
+          id: firstContact.address,
+          username: firstContact.username || 'Unknown',
+          address: firstContact.address,
+          profilePicture: firstContact.profilePicture,
+        }
+      ]);
+
+      // Select the new conversation
+      selectConversation(newConversation.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create conversation');
     } finally {
       setIsCreatingConversation(false);
     }
-  }, [currentUser]);
+  };
 
   const selectConversation = (conversationId: string) => {
     const conversation = conversations.find(c => c.id === conversationId);
+    setCurrentConversation(conversation || null);
     if (conversation) {
-      setCurrentConversation(conversation);
       loadMessages(conversationId);
     }
   };
 
   const searchMessages = async (query: string): Promise<Message[]> => {
     try {
-      return await walrusService.searchMessages(query, currentConversation?.id);
+      // In a real implementation, you would search through your message history
+      // For now, we'll return an empty array
+      return [];
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to search messages');
       return [];
