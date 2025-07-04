@@ -1,5 +1,5 @@
 
-import { Message } from "./MessagingApp";
+import { Message } from "../utils/localStorage";
 
 interface MessageBubbleProps {
   message: Message;
