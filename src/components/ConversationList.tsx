@@ -8,7 +8,11 @@ import { useMessaging } from '../contexts/MessagingContext';
 import { Conversation } from '../types/messaging';
 import { MessageCircle, Send, Plus, Loader2 } from 'lucide-react';
 
-export const ConversationList: React.FC = () => {
+interface ConversationListProps {
+  onMobileClose?: () => void;
+}
+
+export const ConversationList: React.FC<ConversationListProps> = ({ onMobileClose }) => {
   const { 
     conversations, 
     currentConversation, 
@@ -37,7 +41,7 @@ export const ConversationList: React.FC = () => {
 
   if (!currentUser) {
     return (
-      <div className="w-80 border-r border-border bg-background">
+      <div className="w-full h-full bg-background md:w-80">
         <div className="p-4 border-b border-border">
           <h2 className="text-lg font-semibold">Conversations</h2>
         </div>
@@ -49,7 +53,7 @@ export const ConversationList: React.FC = () => {
   }
 
   return (
-    <div className="w-80 border-r border-border bg-background">
+    <div className="w-full h-full bg-background md:w-80">
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Conversations</h2>
@@ -102,10 +106,15 @@ export const ConversationList: React.FC = () => {
               return null; // Skip conversations where we can't find the other participant
             }
             
+            const handleSelectConversation = () => {
+              selectConversation(conversation.id);
+              onMobileClose?.(); // Close mobile sidebar when conversation is selected
+            };
+
             return (
               <div
                 key={conversation.id}
-                onClick={() => selectConversation(conversation.id)}
+                onClick={handleSelectConversation}
                 className={`p-3 rounded-lg cursor-pointer transition-colors ${
                   isSelected 
                     ? 'bg-accent text-accent-foreground' 

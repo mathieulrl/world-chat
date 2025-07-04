@@ -96,7 +96,7 @@ const Index = () => {
   // Show main app if user is verified
   if (isVerified) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-100">
         <MessagingApp />
       </div>
     );
