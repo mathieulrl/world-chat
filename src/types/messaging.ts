@@ -5,6 +5,25 @@ export interface User {
   profilePicture?: string;
 }
 
+export interface PaymentData {
+  amount: number;
+  token: 'WLD' | 'USDC';
+  recipientAddress: string;
+  transactionHash: string;
+  status: 'pending' | 'completed' | 'failed';
+}
+
+export interface MoneyRequest {
+  id: string;
+  amount: number;
+  token: 'WLD' | 'USDC';
+  description: string;
+  requesterId: string;
+  requesterAddress: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: Date;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -12,6 +31,9 @@ export interface Message {
   content: string;
   timestamp: Date;
   messageType: 'text' | 'payment' | 'payment_request';
+  paymentData?: PaymentData;
+  moneyRequestData?: MoneyRequest;
+  // Legacy fields for backward compatibility
   paymentAmount?: number;
   paymentToken?: 'WLD' | 'USDC';
   paymentReference?: string;
@@ -38,13 +60,6 @@ export interface PaymentRequest {
   description: string;
 }
 
-export interface MoneyRequest {
-  amount: number;
-  token: 'WLD' | 'USDC';
-  description?: string;
-  requestId: string;
-}
-
 export interface WalrusMessage {
   id: string;
   conversationId: string;
@@ -52,6 +67,9 @@ export interface WalrusMessage {
   content: string;
   timestamp: string;
   messageType: 'text' | 'payment' | 'payment_request';
+  paymentData?: PaymentData;
+  moneyRequestData?: MoneyRequest;
+  // Legacy fields for backward compatibility
   paymentAmount?: number;
   paymentToken?: 'WLD' | 'USDC';
   paymentReference?: string;

@@ -2,10 +2,18 @@
 export async function initiatePayment(): Promise<{ id: string }> {
   // In a real app, this would be a server endpoint
   // For now, we'll simulate the API call
-  const uuid = crypto.randomUUID().replace(/-/g, '');
+  
+  // Create a MiniKit-compatible reference format
+  // Requirements: 1-50 characters, alphanumeric + underscore/hyphen only
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  const reference = `payment_${timestamp}_${random}`;
+  
+  // Ensure it's within MiniKit limits (max 50 chars)
+  const finalReference = reference.length > 50 ? reference.substring(0, 50) : reference;
   
   // TODO: Store the ID field in your database so you can verify the payment later
-  return { id: uuid };
+  return { id: finalReference };
 }
 
 // Mock API endpoint for confirming payments

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { MessageBubble } from './MessageBubble';
 import { useMessaging } from '../contexts/MessagingContext';
-import { Send, DollarSign, Download, MessageCircle, Menu } from 'lucide-react';
+import { Send, DollarSign, Download, MessageCircle, Menu, RefreshCw } from 'lucide-react';
 
 interface ChatInterfaceProps {
   onToggleMobileSidebar?: () => void;
@@ -23,6 +23,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onToggleMobileSide
     sendMessage, 
     sendPayment, 
     requestMoney,
+    refreshMessageHistory,
     currentUser,
     isLoading 
   } = useMessaging();
@@ -145,6 +146,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onToggleMobileSide
               }
             </p>
           </div>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={refreshMessageHistory}
+            disabled={isLoading}
+            title="Refresh messages"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
       </div>
 
