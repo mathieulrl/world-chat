@@ -11,19 +11,32 @@ export const COMETH_CONFIG: ComethConfig = {
   apiKey: import.meta.env.VITE_COMETH_API_KEY || '',
   bundlerUrl: import.meta.env.VITE_4337_BUNDLER_URL || 'https://bundler.cometh.io/480',
   paymasterUrl: import.meta.env.VITE_4337_PAYMASTER_URL || 'https://paymaster.cometh.io/480',
-  entryPointAddress: import.meta.env.VITE_ENTRYPOINT_ADDRESS || '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789',
+  entryPointAddress: import.meta.env.VITE_ENTRYPOINT_ADDRESS || '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeAddress: import.meta.env.VITE_SAFE_ADDRESS || '', // Your Worldcoin Safe address
 };
 
 // Validate configuration
 export const validateComethConfig = (config: ComethConfig): boolean => {
-  return !!(
-    config.apiKey &&
-    config.bundlerUrl &&
-    config.paymasterUrl &&
-    config.entryPointAddress &&
-    config.safeAddress
-  );
+  const missingVars = [];
+  
+  if (!config.apiKey) missingVars.push('VITE_COMETH_API_KEY');
+  if (!config.safeAddress) missingVars.push('VITE_SAFE_ADDRESS');
+  if (!config.bundlerUrl) missingVars.push('VITE_4337_BUNDLER_URL');
+  if (!config.paymasterUrl) missingVars.push('VITE_4337_PAYMASTER_URL');
+  if (!config.entryPointAddress) missingVars.push('VITE_ENTRYPOINT_ADDRESS');
+  
+  if (missingVars.length > 0) {
+    console.error('❌ Missing environment variables:', missingVars.join(', '));
+    console.log('📋 Required environment variables:');
+    console.log('  VITE_COMETH_API_KEY=your_cometh_api_key');
+    console.log('  VITE_SAFE_ADDRESS=your_worldcoin_safe_address');
+    console.log('  VITE_4337_BUNDLER_URL=https://bundler.cometh.io/480');
+    console.log('  VITE_4337_PAYMASTER_URL=https://paymaster.cometh.io/480');
+    console.log('  VITE_ENTRYPOINT_ADDRESS=0x0000000071727De22E5E9d8BAf0edAc6f37da032');
+    return false;
+  }
+  
+  return true;
 };
 
 // Get validated config

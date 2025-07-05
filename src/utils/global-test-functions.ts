@@ -18,6 +18,7 @@ import { testReferenceFormat } from './test-reference-format';
 import { testPaymentDisplay } from './test-payment-display';
 import { testMiniKitRealMode, testWorldAppConnection } from './test-minikit-real-mode';
 import { diagnoseIssues } from './diagnose-issues';
+import { debugComethConfig } from './debug-cometh';
 
 // Make these functions available globally for browser console debugging
 declare global {
@@ -43,6 +44,7 @@ declare global {
     testMiniKitRealMode: () => Promise<void>;
     testWorldAppConnection: () => Promise<boolean>;
     diagnoseIssues: () => Promise<void>;
+    debugComethConfig: () => void;
   }
 }
 
@@ -388,6 +390,9 @@ export function setupGlobalTestFunctions() {
   // Global test function for diagnose issues
   window.diagnoseIssues = diagnoseIssues;
 
+  // Add debug functions to global scope for browser console access
+  (window as any).debugComethConfig = debugComethConfig;
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
@@ -411,4 +416,5 @@ export function setupGlobalTestFunctions() {
   console.log('- testMiniKitRealMode() - Test MiniKit real mode');
   console.log('- testWorldAppConnection() - Test World App connection');
   console.log('- diagnoseIssues() - Diagnose issues');
+  console.log('- debugComethConfig() - Check Cometh environment variables and config');
 }

@@ -79,8 +79,9 @@ export class WorldcoinService {
     try {
       console.log('Initializing Worldcoin MiniKit...');
       
-      // Set the app ID for MiniKit
+      // Set the app ID for MiniKit BEFORE installing
       MiniKit.appId = 'app_633eda004e32e457ef84472c6ef7714c';
+      console.log(`📱 MiniKit App ID set: ${MiniKit.appId}`);
       
       // Note: MiniKit chain configuration is handled by the World App
       // The app should be configured to support Worldcoin mainnet (chainId 480)

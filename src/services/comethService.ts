@@ -245,13 +245,22 @@ export class ComethService {
 let comethServiceInstance: ComethService | null = null;
 
 export const getComethService = (config?: ComethConfig): ComethService => {
-  if (!comethServiceInstance && config) {
-    comethServiceInstance = new ComethService(config);
+  try {
+    // If no config provided, try to get it from the config module
+    if (!config) {
+      const { getComethConfig } = require('../config/cometh');
+      config = getComethConfig();
+    }
+    
+    // Create new instance if none exists
+    if (!comethServiceInstance) {
+      console.log('🔧 Creating new Cometh service instance...');
+      comethServiceInstance = new ComethService(config);
+    }
+    
+    return comethServiceInstance;
+  } catch (error) {
+    console.error('❌ Failed to create Cometh service:', error);
+    throw new Error(`ComethService initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  
-  if (!comethServiceInstance) {
-    throw new Error('ComethService not initialized. Call with config first.');
-  }
-  
-  return comethServiceInstance;
 }; 

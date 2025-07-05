@@ -29,10 +29,20 @@ export class DecentralizedMessagingServiceCometh {
     
     // Initialize Cometh service for transactions
     try {
+      console.log('🔧 Initializing Cometh service...');
       const comethConfig = getComethConfig();
+      console.log('📋 Cometh config loaded:', {
+        apiKey: comethConfig.apiKey ? '✅ Set' : '❌ Missing',
+        safeAddress: comethConfig.safeAddress,
+        bundlerUrl: comethConfig.bundlerUrl,
+        paymasterUrl: comethConfig.paymasterUrl,
+      });
+      
       this.comethService = getComethService(comethConfig);
+      console.log('✅ Cometh service created successfully');
     } catch (error) {
       console.warn('⚠️ Cometh service not available, falling back to read-only mode');
+      console.error('❌ Cometh initialization error:', error);
       this.comethService = null;
     }
   }

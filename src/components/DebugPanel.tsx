@@ -62,6 +62,29 @@ export const DebugPanel: React.FC = () => {
   // Check Cometh status
   const checkComethStatus = async () => {
     try {
+      // First, log environment variables
+      console.log('🔍 Environment Variables Check:');
+      console.log('VITE_COMETH_API_KEY:', import.meta.env.VITE_COMETH_API_KEY ? '✅ Set' : '❌ Missing');
+      console.log('VITE_SAFE_ADDRESS:', import.meta.env.VITE_SAFE_ADDRESS ? '✅ Set' : '❌ Missing');
+      console.log('VITE_4337_BUNDLER_URL:', import.meta.env.VITE_4337_BUNDLER_URL || 'Using default');
+      console.log('VITE_4337_PAYMASTER_URL:', import.meta.env.VITE_4337_PAYMASTER_URL || 'Using default');
+      console.log('VITE_ENTRYPOINT_ADDRESS:', import.meta.env.VITE_ENTRYPOINT_ADDRESS || 'Using default');
+      
+      // Check for missing required variables
+      const missingVars = [];
+      if (!import.meta.env.VITE_COMETH_API_KEY) missingVars.push('VITE_COMETH_API_KEY');
+      if (!import.meta.env.VITE_SAFE_ADDRESS) missingVars.push('VITE_SAFE_ADDRESS');
+      
+      if (missingVars.length > 0) {
+        console.log('❌ Missing required environment variables:', missingVars.join(', '));
+        console.log('📋 Add these to your .env file:');
+        console.log('VITE_COMETH_API_KEY=your_cometh_api_key');
+        console.log('VITE_SAFE_ADDRESS=your_worldcoin_safe_address');
+        console.log('VITE_4337_BUNDLER_URL=https://bundler.cometh.io/480');
+        console.log('VITE_4337_PAYMASTER_URL=https://paymaster.cometh.io/480');
+        console.log('VITE_ENTRYPOINT_ADDRESS=0x0000000071727De22E5E9d8BAf0edAc6f37da032');
+      }
+      
       const config = getComethConfig();
       const service = getComethService(config);
       
@@ -71,9 +94,11 @@ export const DebugPanel: React.FC = () => {
           safeAddress: config.safeAddress,
           bundlerUrl: config.bundlerUrl,
           paymasterUrl: config.paymasterUrl,
+          entryPointAddress: config.entryPointAddress,
         },
         service: service,
         initialized: service.isServiceInitialized(),
+        missingVars: missingVars,
       });
     } catch (error) {
       setComethStatus({
@@ -169,7 +194,16 @@ export const DebugPanel: React.FC = () => {
                         <div>
                           <div>API Key: {comethStatus.config.apiKey}</div>
                           <div>Safe: {comethStatus.config.safeAddress}</div>
+                          <div>Bundler: {comethStatus.config.bundlerUrl}</div>
+                          <div>Paymaster: {comethStatus.config.paymasterUrl}</div>
+                          <div>EntryPoint: {comethStatus.config.entryPointAddress}</div>
                           <div>Initialized: {comethStatus.initialized ? '✅' : '❌'}</div>
+                          {comethStatus.missingVars && comethStatus.missingVars.length > 0 && (
+                            <div className="mt-2 p-2 bg-red-100 rounded">
+                              <div className="font-semibold text-red-800">Missing Variables:</div>
+                              <div className="text-red-700">{comethStatus.missingVars.join(', ')}</div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
