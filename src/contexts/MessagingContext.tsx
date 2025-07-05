@@ -133,7 +133,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         if (messageHistory.length > 0) {
           // Extract unique conversation IDs from messages
           const conversationIds = new Set<string>();
-          messageHistory.forEach((message: any) => {
+          messageHistory.forEach((message: Message) => {
             if (message.conversationId) {
               conversationIds.add(message.conversationId);
             }
@@ -178,7 +178,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         }
         
         // Convert to Conversation format expected by the UI
-        const conversations: Conversation[] = realConversations.map((conv: any) => ({
+        const conversations: Conversation[] = realConversations.map((conv: { id: string; participants: string[]; createdAt: Date; updatedAt: Date }) => ({
           id: conv.id,
           participants: conv.participants.map((addr: string) => ({
             id: addr,
@@ -641,12 +641,10 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
           address: firstContact.address,
           profilePicture: firstContact.profilePicture,
         }
-      } else {
-        // Any non-success status is treated as user cancellation
-        // Contact sharing errors are almost always user cancellations (closing modal)
-        // so we don't show error messages to avoid UX issues
-        console.log('Contact sharing cancelled by user');
-      }
+      ]);
+      
+      // Set the new conversation as current
+      setCurrentConversation(newConversation);
     } catch (error) {
       // Contact sharing exceptions are almost always user cancellations
       // We don't show any error messages to avoid UX issues
