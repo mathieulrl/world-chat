@@ -335,60 +335,37 @@ export class WorldcoinService {
         console.log(`  Error: ${result.finalPayload.error_code}`);
         console.log(`  Error details:`, result.finalPayload);
         
-        // Handle specific error cases
-        if (result.finalPayload.error_code === 'invalid_contract') {
-          console.log(`⚠️ MiniKit returned invalid_contract error. This might be due to:`);
-          console.log(`   - Contract not deployed on this chain`);
-          console.log(`   - Chain not supported by MiniKit`);
-          console.log(`   - ABI mismatch`);
-          console.log(`   - Contract not registered with MiniKit app`);
-          
-          // Use the contract registration utility for detailed analysis
-          const contractRegistration = MiniKitContractRegistration.getInstance();
-          contractRegistration.logErrorAnalysis(result.finalPayload, transactionRequest.contractAddress);
-          
-          // Check contract registration status
-          const registrationInfo = await contractRegistration.checkContractRegistration(
-            transactionRequest.contractAddress
-          );
-          
-          // Check if we're in development mode
-          const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-          
-          if (isDevelopment) {
-            console.log(`🔄 Development mode: Returning mock success`);
-            console.log(`   To fix this in production:`);
-            console.log(`   1. Register contract ${transactionRequest.contractAddress} with MiniKit app`);
-            console.log(`   2. Ensure contract is deployed on Worldcoin Sepolia (chainId 4801)`);
-            console.log(`   3. Verify ABI matches the deployed contract`);
-            
-            // Log registration guidance
-            const guidance = contractRegistration.getRegistrationGuidance(transactionRequest.contractAddress);
-            console.log(`📋 Registration Guidance:`);
-            guidance.forEach(line => console.log(`   ${line}`));
-            
-            return {
-              success: true,
-              transactionHash: `mock-tx-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            };
-          } else {
-            console.log(`❌ Production mode: Contract not registered with MiniKit`);
-            
-            // Log alternative methods
-            const alternatives = contractRegistration.getAlternativeMethods();
-            console.log(`🔄 Alternative Methods:`);
-            alternatives.forEach(line => console.log(`   ${line}`));
-            
-            return {
-              success: false,
-              error: `Contract ${transactionRequest.contractAddress} not registered with MiniKit app`,
-            };
-          }
-        }
+        // Check if we're in development mode
+        const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+        
+        // For real transactions, we need to register the contract with MiniKit
+        console.log(`⚠️ MiniKit returned invalid_contract error. This means:`);
+        console.log(`   - Contract ${transactionRequest.contractAddress} is not registered with MiniKit`);
+        console.log(`   - You need to register the contract in the Worldcoin Developer Portal`);
+        console.log(`   - Or use a different transaction method`);
+        
+        // Use the contract registration utility for detailed analysis
+        const contractRegistration = MiniKitContractRegistration.getInstance();
+        contractRegistration.logErrorAnalysis(result.finalPayload, transactionRequest.contractAddress);
+        
+        // Check contract registration status
+        const registrationInfo = await contractRegistration.checkContractRegistration(
+          transactionRequest.contractAddress
+        );
+        
+        // Log registration guidance
+        const guidance = contractRegistration.getRegistrationGuidance(transactionRequest.contractAddress);
+        console.log(`📋 Registration Guidance:`);
+        guidance.forEach(line => console.log(`   ${line}`));
+        
+        // Log alternative methods
+        const alternatives = contractRegistration.getAlternativeMethods();
+        console.log(`🔄 Alternative Methods:`);
+        alternatives.forEach(line => console.log(`   ${line}`));
         
         return {
           success: false,
-          error: result.finalPayload.error_code,
+          error: `Contract ${transactionRequest.contractAddress} not registered with MiniKit app. Please register the contract in the Worldcoin Developer Portal or use an alternative transaction method.`,
         };
       }
 

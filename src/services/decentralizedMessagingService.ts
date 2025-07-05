@@ -57,7 +57,26 @@ export class DecentralizedMessagingService {
       };
     } catch (error) {
       console.error('Error sending decentralized message:', error);
-      throw error;
+      
+      // Provide a more detailed error message
+      let errorMessage = 'Unknown error occurred while sending message';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object') {
+        // Try to extract meaningful error information
+        if ('error' in error) {
+          errorMessage = String(error.error);
+        } else if ('message' in error) {
+          errorMessage = String(error.message);
+        } else {
+          errorMessage = JSON.stringify(error);
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 

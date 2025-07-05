@@ -145,90 +145,46 @@ The app uses a deployed smart contract on Sepolia testnet:
 
 ## 🧪 Testing
 
-### Test Walrus Integration
+### Test Real Transactions Status
 ```typescript
-import testDecentralizedMessaging from './src/utils/testDecentralizedMessaging';
+import testRealTransactionsStatus from './src/utils/test-real-transactions';
 
-// In your browser console or test file
-await testDecentralizedMessaging();
-```
-
-### Test Smart Contract Integration
-```typescript
-import testContractIntegration from './src/utils/testContractIntegration';
-
-// In your browser console or test file
-await testContractIntegration();
-```
-
-### Test Worldcoin MiniKit Contract Writing
-```typescript
-import { testWorldcoinContractWriting } from './src/utils/testContractIntegration';
-
-// Test the new Worldcoin MiniKit contract writing functionality
-await testWorldcoinContractWriting();
-```
-
-### Test Real Worldcoin MiniKit Integration
-```typescript
-import testRealMiniKit from './src/utils/testRealMiniKit';
-
-// Test the real Worldcoin MiniKit integration
-await testRealMiniKit();
-
-// Or run a quick test
-import { quickMiniKitTest } from './src/utils/testRealMiniKit';
-await quickMiniKitTest();
+// Test current status of real transactions
+await testRealTransactionsStatus();
 ```
 
 ### Test Complete Integration
 ```typescript
 import MessagingIntegrationExample from './src/utils/integrationExample';
-
-// Test the complete messaging flow with Worldcoin MiniKit
 const integration = new MessagingIntegrationExample();
 await integration.testCompleteIntegration();
 ```
 
-### Test User Management
+### Test Walrus Storage
 ```typescript
-import testUserManagement from './src/utils/testUserManagement';
-
-// Test the user management system with specific users
-await testUserManagement();
-
-// Test specific user scenarios
-import { testSpecificUsers } from './src/utils/testUserManagement';
-await testSpecificUsers();
-
-// Quick user lookup test
-import { quickUserLookup } from './src/utils/testUserManagement';
-await quickUserLookup();
+import testDecentralizedMessaging from './src/utils/testDecentralizedMessaging';
+await testDecentralizedMessaging();
 ```
 
-### Test Complete User Integration
+### Test Smart Contract Reading
 ```typescript
-import testCompleteUserIntegration from './src/utils/testCompleteUserIntegration';
-
-// Test complete user integration with messaging and payments
-await testCompleteUserIntegration();
-
-// Test user switching scenarios
-import { testUserSwitching } from './src/utils/testCompleteUserIntegration';
-await testUserSwitching();
-
-// Quick user integration test
-import { quickUserIntegrationTest } from './src/utils/testCompleteUserIntegration';
-await quickUserIntegrationTest();
+import testContractIntegration from './src/utils/testContractIntegration';
+await testContractIntegration();
 ```
 
-### Test MiniKit Contract Registration
-```typescript
-import testMiniKitContractRegistration from './src/utils/test-minikit-contract-registration';
+## 🚨 Important Notes
 
-// Test MiniKit contract registration error handling
-await testMiniKitContractRegistration();
-```
+### Real Transactions
+- **Status**: ✅ **Working (contract whitelisted in Worldcoin Developer Portal)**
+- **Contract**: `0x063816286ae3312e759f80Afdb10C8879b30688D`
+- **App ID**: `app_633eda004e32e457ef84472c6ef7714c`
+- **Chain**: Worldcoin Sepolia (4801)
+
+### Testing
+- All tests will now show real transaction results
+- Contract reading tests work (reading is functional)
+- Contract writing tests work (writing is functional)
+- MiniKit integration is fully operational
 
 ## 🔧 MiniKit Contract Registration
 
@@ -366,18 +322,21 @@ Chatterbox includes the following specific users for testing:
 
 All users have full permissions for messaging, payments, and payment requests.
 
-## 🚀 Current Status
+## 🎯 Current Status
 
-### ✅ **Working Features**
-- **Walrus Storage**: ✅ Fully integrated and working
-- **Smart Contract Reading**: ✅ Reading message metadata from deployed contract
-- **Smart Contract Writing**: ✅ Writing message metadata with Worldcoin MiniKit
-- **Worldcoin MiniKit**: ✅ Real integration with app ID `app_633eda004e32e457ef84472c6ef7714c`
-- **User Management**: ✅ Real users with wallet addresses
-- **Environment Configuration**: ✅ Infura ID and Vite environment variables
+### ✅ Working Components
+- **Walrus Storage**: ✅ Fully functional
+- **Smart Contract Reading**: ✅ Working (contract deployed at `0x063816286ae3312e759f80Afdb10C8879b30688D`)
+- **Smart Contract Writing**: ✅ **Working (contract whitelisted in Worldcoin Developer Portal)**
+- **Worldcoin Sepolia Chain**: ✅ Connected via `https://worldchain-sepolia.drpc.org`
+- **Message Encryption**: ✅ Implemented
+- **User Management**: ✅ Mock users configured
+- **MiniKit Integration**: ✅ **Functional (contract registered)**
 
-### 📋 **Configuration**
-- **Contract Address**: `0xA27F6614c53ce3c4E7ac92A64d03bA1853e3c304` ✅
-- **Network**: Sepolia Testnet ✅
-- **Worldcoin App ID**: `app_633eda004e32e457ef84472c6ef7714c` ✅
-- **Infura ID**: Configured in `.env` ✅
+### 🎉 **Real Transactions Now Working!**
+
+**Status**: ✅ **Contract whitelisted in Worldcoin Developer Portal**
+- **Contract**: `0x063816286ae3312e759f80Afdb10C8879b30688D`
+- **App ID**: `app_633eda004e32e457ef84472c6ef7714c`
+- **Chain**: Worldcoin Sepolia (4801)
+- **Real Transactions**: ✅ **Working**

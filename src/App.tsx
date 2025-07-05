@@ -8,12 +8,18 @@ import { MessagingProvider } from "./contexts/MessagingContext";
 import DebugPanel from "./components/DebugPanel";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { setupGlobalTestFunctions } from "./utils/global-test-functions";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+
+  // Setup global test functions for browser console debugging
+  useEffect(() => {
+    setupGlobalTestFunctions();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

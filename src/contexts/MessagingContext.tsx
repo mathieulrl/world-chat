@@ -19,6 +19,7 @@ interface MessagingContextType {
   acceptMoneyRequest: (messageId: string, conversationId: string) => Promise<void>;
   declineMoneyRequest: (messageId: string, conversationId: string) => Promise<void>;
   createConversation: (participants: User[]) => Promise<Conversation>;
+  createDefaultConversation: () => Promise<Conversation>;
   createConversationWithContacts: () => Promise<void>;
   selectConversation: (conversationId: string) => void;
   searchMessages: (query: string) => Promise<Message[]>;
@@ -122,53 +123,144 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       }
 
       console.log('🔍 Getting conversations for address:', userToUse.address);
-      // Get real conversations from decentralized service
-      const realConversations = await decentralizedService.getUserConversations(userToUse.address);
-      console.log('📥 Raw conversations from service:', realConversations);
       
-      if (realConversations.length === 0) {
-        console.log('ℹ️ No conversations found - this is normal for a new user');
-        setConversations([]);
-        return;
+      // First, try to get message history to see if there are any messages
+      try {
+        const messageHistory = await decentralizedService.getMessageHistory(userToUse.address);
+        console.log(`📨 Found ${messageHistory.length} messages for user`);
+        
+        if (messageHistory.length > 0) {
+          // Extract unique conversation IDs from messages
+          const conversationIds = new Set<string>();
+          messageHistory.forEach((message: any) => {
+            if (message.conversationId) {
+              conversationIds.add(message.conversationId);
+            }
+          });
+          
+          const uniqueConversationIds = Array.from(conversationIds);
+          console.log(`📋 Found ${uniqueConversationIds.length} unique conversation IDs:`, uniqueConversationIds);
+          
+          // Create conversation objects from the conversation IDs
+          const conversations: Conversation[] = uniqueConversationIds.map((convId: string) => ({
+            id: convId,
+            participants: [
+              {
+                id: userToUse.address,
+                username: userToUse.username,
+                address: userToUse.address,
+                profilePicture: userToUse.profilePicture,
+              }
+            ],
+            unreadCount: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }));
+          
+          console.log('✅ Created conversations from message history:', conversations);
+          setConversations(conversations);
+          return;
+        }
+      } catch (error) {
+        console.log('⚠️ Failed to get message history:', error.message);
       }
       
-      // Convert to Conversation format expected by the UI
-      const conversations: Conversation[] = realConversations.map((conv: any) => ({
-        id: conv.id,
-        participants: conv.participants.map((addr: string) => ({
-          id: addr,
-          username: addr, // You can enhance this with user lookup
-          address: addr,
-          profilePicture: 'https://via.placeholder.com/40'
-        })),
-        unreadCount: 0, // You can implement unread logic if needed
-        createdAt: conv.createdAt,
-        updatedAt: conv.updatedAt,
-      }));
-      
-      console.log('✅ Processed conversations:', conversations);
-      setConversations(conversations);
+      // Fallback: try to get conversations from smart contract
+      try {
+        const realConversations = await decentralizedService.getUserConversations(userToUse.address);
+        console.log('📥 Raw conversations from service:', realConversations);
+        
+        if (realConversations.length === 0) {
+          console.log('ℹ️ No conversations found - this is normal for a new user');
+          setConversations([]);
+          return;
+        }
+        
+        // Convert to Conversation format expected by the UI
+        const conversations: Conversation[] = realConversations.map((conv: any) => ({
+          id: conv.id,
+          participants: conv.participants.map((addr: string) => ({
+            id: addr,
+            username: addr, // You can enhance this with user lookup
+            address: addr,
+            profilePicture: 'https://via.placeholder.com/40'
+          })),
+          unreadCount: 0, // You can implement unread logic if needed
+          createdAt: conv.createdAt,
+          updatedAt: conv.updatedAt,
+        }));
+        
+        console.log('✅ Processed conversations:', conversations);
+        setConversations(conversations);
+      } catch (error) {
+        console.log('⚠️ Failed to get conversations from service:', error.message);
+        console.log('ℹ️ Setting empty conversations array');
+        setConversations([]);
+      }
     } catch (err) {
       console.error('❌ Failed to load conversations:', err);
       // Don't set error for empty conversations - this is normal
       if (!err.message?.includes('returned no data')) {
         setError(err instanceof Error ? err.message : 'Failed to load conversations');
       }
+      // Set empty conversations as fallback
+      setConversations([]);
     }
   };
 
   const loadMessages = async (conversationId: string) => {
     try {
       setIsLoading(true);
+      console.log(`📨 Loading messages for conversation: ${conversationId}`);
       
       // Use decentralized service to get messages
       const conversationMessages = await decentralizedService.getConversationMessages(conversationId);
-      setMessages(conversationMessages.reverse()); // Show oldest first
+      console.log(`📨 Found ${conversationMessages.length} messages for conversation ${conversationId}`);
+      
+      if (conversationMessages.length === 0) {
+        console.log('ℹ️ No messages found for conversation - this is normal for a new conversation');
+        setMessages([]);
+        return;
+      }
+      
+      // Sort messages by timestamp (oldest first)
+      const sortedMessages = conversationMessages.sort((a, b) => 
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+      
+      console.log(`✅ Loaded ${sortedMessages.length} messages for conversation ${conversationId}`);
+      setMessages(sortedMessages);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load messages');
+      console.error(`❌ Failed to load messages for conversation ${conversationId}:`, err);
+      
+      // Don't set error for empty conversations - this is normal
+      if (!err.message?.includes('returned no data') && !err.message?.includes('No messages found')) {
+        setError(err instanceof Error ? err.message : 'Failed to load messages');
+      }
+      
+      // Set empty messages as fallback
+      setMessages([]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const createDefaultConversation = async (): Promise<Conversation> => {
+    if (!currentUser) {
+      throw new Error('No current user available');
+    }
+    
+    const defaultConversation: Conversation = {
+      id: `default_${currentUser.id}_${Date.now()}`,
+      participants: [currentUser],
+      unreadCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    console.log('✅ Created default conversation:', defaultConversation);
+    setConversations(prev => [...prev, defaultConversation]);
+    return defaultConversation;
   };
 
   const sendMessage = async (content: string, conversationId: string) => {
@@ -179,9 +271,19 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
 
     try {
       console.log('💬 Sending message:', { content, conversationId, sender: currentUser.id });
+      
+      // If no conversation is selected, create a default one
+      let targetConversationId = conversationId;
+      if (!conversationId || conversationId === '') {
+        console.log('📝 No conversation ID provided, creating default conversation');
+        const defaultConversation = await createDefaultConversation();
+        targetConversationId = defaultConversation.id;
+        setCurrentConversation(defaultConversation);
+      }
+      
       const message: Message = {
         id: crypto.randomUUID(),
-        conversationId,
+        conversationId: targetConversationId,
         senderId: currentUser.id,
         content,
         timestamp: new Date(),
@@ -203,7 +305,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       // Update conversation
       setConversations(prev => 
         prev.map(conv => 
-          conv.id === conversationId 
+          conv.id === targetConversationId 
             ? { ...conv, lastMessage: message, updatedAt: new Date() }
             : conv
         )
@@ -211,7 +313,26 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       console.log('✅ Message state updated successfully');
     } catch (err) {
       console.error('❌ Failed to send message:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
+      
+      // Provide a more detailed error message
+      let errorMessage = 'Failed to send message';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        // Try to extract meaningful error information
+        if ('error' in err) {
+          errorMessage = String(err.error);
+        } else if ('message' in err) {
+          errorMessage = String(err.message);
+        } else {
+          errorMessage = JSON.stringify(err);
+        }
+      }
+      
+      setError(errorMessage);
     }
   };
 
@@ -526,6 +647,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     acceptMoneyRequest,
     declineMoneyRequest,
     createConversation,
+    createDefaultConversation,
     createConversationWithContacts,
     selectConversation,
     searchMessages,

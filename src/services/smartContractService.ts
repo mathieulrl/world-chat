@@ -86,6 +86,12 @@ export class SmartContractService {
         senderAddress
       );
 
+      // Debug the result
+      console.log(`🔍 Worldcoin service result:`, result);
+      console.log(`   Success: ${result.success}`);
+      console.log(`   Transaction Hash: ${result.transactionHash}`);
+      console.log(`   Error: ${result.error}`);
+
       if (result.success) {
         console.log(`✅ Message metadata stored on smart contract!`);
         console.log(`  Transaction Hash: ${result.transactionHash}`);
@@ -95,10 +101,22 @@ export class SmartContractService {
         
         return result.transactionHash || 'pending';
       } else {
-        throw new Error(`Failed to store message metadata: ${result.error}`);
+        // Handle the case where Worldcoin service returns success: false
+        console.log(`⚠️ Worldcoin service returned success: false`);
+        console.log(`  Error: ${result.error}`);
+        console.log(`  Transaction Hash: ${result.transactionHash}`);
+        
+        // Throw a proper error
+        const errorMessage = result.error || 'Unknown error from Worldcoin service';
+        throw new Error(`Failed to store message metadata: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error storing message metadata on smart contract:', error);
+      
+      // Provide a more detailed error message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Detailed error: ${errorMessage}`);
+      
       throw error;
     }
   }
@@ -437,5 +455,79 @@ export class SmartContractService {
       network: this.config.network,
       rpcUrl: this.config.rpcUrl,
     };
+  }
+
+  /**
+   * Execute transaction directly using viem (alternative to MiniKit)
+   * This method can be used when MiniKit doesn't recognize the contract
+   */
+  async executeDirectTransaction(
+    messageRecord: MessageRecord,
+    senderAddress: string
+  ): Promise<string> {
+    try {
+      console.log(`Executing direct transaction for sender: ${senderAddress}`);
+      console.log(`  Contract: ${this.config.contractAddress}`);
+      console.log(`  Function: storeMessage`);
+      console.log(`  Args: ${JSON.stringify([
+        messageRecord.blobId,
+        messageRecord.conversationId,
+        messageRecord.messageType,
+        messageRecord.suiObjectId || '',
+        messageRecord.txDigest || ''
+      ])}`);
+
+      // Note: This requires a wallet client with a private key
+      // In a real implementation, you would need to:
+      // 1. Get the user's private key from their wallet
+      // 2. Create a wallet client with the private key
+      // 3. Execute the transaction
+      
+      console.log(`⚠️ Direct transaction requires user's private key`);
+      console.log(`   This is not implemented in this demo for security reasons`);
+      console.log(`   In a real app, you would:`);
+      console.log(`   1. Connect to user's wallet (MetaMask, etc.)`);
+      console.log(`   2. Get user's signature for the transaction`);
+      console.log(`   3. Execute the transaction with their private key`);
+      
+      throw new Error('Direct transaction not implemented. Please register the contract with MiniKit or implement wallet connection.');
+      
+    } catch (error) {
+      console.error('Error executing direct transaction:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get transaction guidance for different scenarios
+   */
+  getTransactionGuidance(): string[] {
+    return [
+      '📋 Transaction Options:',
+      '=====================',
+      '',
+      'Option 1: Register Contract with MiniKit (Recommended)',
+      '  1. Go to Worldcoin Developer Portal',
+      '  2. Navigate to Configuration → Advanced',
+      '  3. Add contract address: ' + this.config.contractAddress,
+      '  4. Select chain: Worldcoin Sepolia (4801)',
+      '  5. Wait for approval from Worldcoin team',
+      '',
+      'Option 2: Use Alternative Wallet',
+      '  1. Connect to MetaMask or other wallet',
+      '  2. Switch to Worldcoin Sepolia network',
+      '  3. Execute transaction directly',
+      '',
+      'Option 3: Use Web3 Provider',
+      '  1. Implement WalletConnect integration',
+      '  2. Connect to any Web3 wallet',
+      '  3. Execute transactions through provider',
+      '',
+      'Current Status:',
+      '  - Contract: ' + this.config.contractAddress,
+      '  - Chain: Worldcoin Sepolia (4801)',
+      '  - RPC: https://worldchain-sepolia.drpc.org',
+      '  - MiniKit: Contract not registered'
+    ];
   }
 } 
