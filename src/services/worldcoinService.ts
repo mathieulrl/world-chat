@@ -253,8 +253,16 @@ export class WorldcoinService {
         abi: transactionRequest.abi,
         functionName: transactionRequest.functionName,
         args: transactionRequest.args,
-        value: transactionRequest.value?.toString() || '0',
+        value: transactionRequest.value ? `0x${transactionRequest.value.toString(16)}` : '0x0',
       };
+
+      console.log(`Transaction details:`, {
+        address: transaction.address,
+        functionName: transaction.functionName,
+        args: transaction.args,
+        value: transaction.value,
+        valueType: typeof transaction.value,
+      });
 
       // Execute the transaction using MiniKit
       const result = await MiniKit.commandsAsync.sendTransaction({
