@@ -13,6 +13,8 @@ import { verifyTransactionHash } from './verify-transaction-hash';
 import { debugPaymentAmount } from './debug-payment-amount';
 import { testPaymentFlow } from './test-payment-flow';
 import { testUIPayment } from './test-ui-payment';
+import { debugMiniKitInputError } from './debug-minikit-input-error';
+import { testReferenceFormat } from './test-reference-format';
 
 // Make these functions available globally for browser console debugging
 declare global {
@@ -32,6 +34,8 @@ declare global {
     debugPaymentAmount: (amount: string) => Promise<void>;
     testPaymentFlow: () => Promise<void>;
     testUIPayment: () => Promise<void>;
+    debugMiniKitInputError: (error: string) => Promise<void>;
+    testReferenceFormat: () => Promise<void>;
   }
 }
 
@@ -359,6 +363,12 @@ export function setupGlobalTestFunctions() {
   // Global test function for UI payment
   window.testUIPayment = testUIPayment;
 
+  // Global debug function for MiniKit input error
+  window.debugMiniKitInputError = debugMiniKitInputError;
+
+  // Global test function for reference format
+  window.testReferenceFormat = testReferenceFormat;
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
@@ -376,4 +386,6 @@ export function setupGlobalTestFunctions() {
   console.log('- debugPaymentAmount(amount) - Debug payment amount');
   console.log('- testPaymentFlow() - Test payment flow');
   console.log('- testUIPayment() - Test UI payment');
+  console.log('- debugMiniKitInputError(error) - Debug MiniKit input error');
+  console.log('- testReferenceFormat() - Test reference format');
 }
