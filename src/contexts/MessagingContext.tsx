@@ -125,6 +125,12 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       const realConversations = await decentralizedService.getUserConversations(userToUse.address);
       console.log('📥 Raw conversations from service:', realConversations);
       
+      if (realConversations.length === 0) {
+        console.log('ℹ️ No conversations found - this is normal for a new user');
+        setConversations([]);
+        return;
+      }
+      
       // Convert to Conversation format expected by the UI
       const conversations: Conversation[] = realConversations.map((conv: any) => ({
         id: conv.id,
@@ -143,7 +149,10 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       setConversations(conversations);
     } catch (err) {
       console.error('❌ Failed to load conversations:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load conversations');
+      // Don't set error for empty conversations - this is normal
+      if (!err.message?.includes('returned no data')) {
+        setError(err instanceof Error ? err.message : 'Failed to load conversations');
+      }
     }
   };
 

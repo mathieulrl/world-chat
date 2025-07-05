@@ -166,6 +166,11 @@ export class DecentralizedMessagingService {
       const conversationIds = await this.smartContractService.getUserConversations(userAddress);
       console.log(`Found ${conversationIds.length} conversation IDs for user`);
 
+      if (conversationIds.length === 0) {
+        console.log('No conversations found for user, returning empty array');
+        return [];
+      }
+
       // Step 2: Get conversation details for each ID
       const conversations: any[] = [];
       for (const conversationId of conversationIds) {
@@ -182,7 +187,8 @@ export class DecentralizedMessagingService {
       return conversations;
     } catch (error) {
       console.error('Error getting user conversations:', error);
-      throw error;
+      // Return empty array instead of throwing to prevent app crashes
+      return [];
     }
   }
 } 

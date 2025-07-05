@@ -122,9 +122,21 @@ export class SmartContractService {
       }));
       
       console.log(`Retrieved ${convertedRecords.length} messages from smart contract`);
+      
+      if (convertedRecords.length === 0) {
+        console.log('ℹ️ No messages found - this is normal for a new user or empty contract');
+      }
+      
       return convertedRecords;
     } catch (error) {
       console.error('Error retrieving message history from smart contract:', error);
+      
+      // Check if it's a "no data" error (empty contract)
+      if (error.message && error.message.includes('returned no data')) {
+        console.log('ℹ️ Contract returned no data - this is normal for an empty contract');
+        return [];
+      }
+      
       // Return empty array if contract call fails
       return [];
     }
@@ -199,22 +211,45 @@ export class SmartContractService {
 
   /**
    * Get all conversation IDs for a user
+   * Since getUserConversations doesn't exist in the contract, we extract conversation IDs from user messages
    */
   async getUserConversations(userAddress: string): Promise<string[]> {
     try {
       console.log(`Retrieving conversations for user: ${userAddress}`);
       
-      const conversationIds = await this.publicClient.readContract({
+      // Get all messages for the user
+      const userMessages = await this.publicClient.readContract({
         address: this.config.contractAddress as `0x${string}`,
         abi: messagingContractAbi,
-        functionName: 'getUserConversations',
+        functionName: 'getUserMessages',
         args: [userAddress],
       });
       
-      console.log(`Retrieved ${conversationIds.length} conversations for user`);
-      return conversationIds;
+      // Extract unique conversation IDs from user messages
+      const conversationIds = new Set<string>();
+      userMessages.forEach((message: any) => {
+        if (message.conversationId) {
+          conversationIds.add(message.conversationId);
+        }
+      });
+      
+      const uniqueConversationIds = Array.from(conversationIds);
+      console.log(`Retrieved ${uniqueConversationIds.length} unique conversations for user`);
+      
+      if (uniqueConversationIds.length === 0) {
+        console.log('ℹ️ No conversations found - this is normal for a new user or empty contract');
+      }
+      
+      return uniqueConversationIds;
     } catch (error) {
       console.error('Error retrieving user conversations:', error);
+      
+      // Check if it's a "no data" error (empty contract)
+      if (error.message && error.message.includes('returned no data')) {
+        console.log('ℹ️ Contract returned no data - this is normal for an empty contract');
+        return [];
+      }
+      
       // Return empty array if contract call fails
       return [];
     }
