@@ -99,7 +99,29 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Webview specific styles for World App */
+  #root {
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height for mobile */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Handle safe areas in mobile webviews */
+  @supports (padding: max(0px)) {
+    #root {
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+    }
   }
 }

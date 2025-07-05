@@ -641,12 +641,16 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
           address: firstContact.address,
           profilePicture: firstContact.profilePicture,
         }
-      ]);
-
-      // Select the new conversation
-      selectConversation(newConversation.id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create conversation');
+      } else {
+        // Any non-success status is treated as user cancellation
+        // Contact sharing errors are almost always user cancellations (closing modal)
+        // so we don't show error messages to avoid UX issues
+        console.log('Contact sharing cancelled by user');
+      }
+    } catch (error) {
+      // Contact sharing exceptions are almost always user cancellations
+      // We don't show any error messages to avoid UX issues
+      console.log('Contact sharing cancelled by user');
     } finally {
       setIsCreatingConversation(false);
     }
