@@ -9,7 +9,7 @@ async function testContractFunctions() {
 
   // Initialize services
   const smartContractService = new SmartContractService({
-    contractAddress: '0xA27F6614c53ce3c4E7ac92A64d03bA1853e3c304',
+    contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D',
     network: 'testnet',
   });
 
@@ -20,7 +20,7 @@ async function testContractFunctions() {
       network: 'testnet',
     },
     smartContract: {
-      contractAddress: '0xA27F6614c53ce3c4E7ac92A64d03bA1853e3c304',
+      contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D',
       network: 'testnet',
     },
   });
