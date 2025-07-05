@@ -2,6 +2,7 @@ import { PaymentRequest } from '../types/messaging';
 import { initiatePayment, confirmPayment } from '../api/initiate-payment';
 import { createWalletClient, createPublicClient, http } from 'viem';
 import { MiniKit } from '@worldcoin/minikit-js';
+import MiniKitContractRegistration from '../utils/minikit-contract-registration';
 
 // Token conversion utility
 const tokenToDecimals = (amount: number, token: string): string => {
@@ -338,13 +339,49 @@ export class WorldcoinService {
           console.log(`   - Contract not deployed on this chain`);
           console.log(`   - Chain not supported by MiniKit`);
           console.log(`   - ABI mismatch`);
+          console.log(`   - Contract not registered with MiniKit app`);
           
-          // For now, return a mock success since we're in mock mode
-          console.log(`🔄 Returning mock success for development`);
-          return {
-            success: true,
-            transactionHash: `mock-tx-${Date.now()}`,
-          };
+          // Use the contract registration utility for detailed analysis
+          const contractRegistration = MiniKitContractRegistration.getInstance();
+          contractRegistration.logErrorAnalysis(result.finalPayload, transactionRequest.contractAddress);
+          
+          // Check contract registration status
+          const registrationInfo = await contractRegistration.checkContractRegistration(
+            transactionRequest.contractAddress
+          );
+          
+          // Check if we're in development mode
+          const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+          
+          if (isDevelopment) {
+            console.log(`🔄 Development mode: Returning mock success`);
+            console.log(`   To fix this in production:`);
+            console.log(`   1. Register contract ${transactionRequest.contractAddress} with MiniKit app`);
+            console.log(`   2. Ensure contract is deployed on Worldcoin Sepolia (chainId 4801)`);
+            console.log(`   3. Verify ABI matches the deployed contract`);
+            
+            // Log registration guidance
+            const guidance = contractRegistration.getRegistrationGuidance(transactionRequest.contractAddress);
+            console.log(`📋 Registration Guidance:`);
+            guidance.forEach(line => console.log(`   ${line}`));
+            
+            return {
+              success: true,
+              transactionHash: `mock-tx-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            };
+          } else {
+            console.log(`❌ Production mode: Contract not registered with MiniKit`);
+            
+            // Log alternative methods
+            const alternatives = contractRegistration.getAlternativeMethods();
+            console.log(`🔄 Alternative Methods:`);
+            alternatives.forEach(line => console.log(`   ${line}`));
+            
+            return {
+              success: false,
+              error: `Contract ${transactionRequest.contractAddress} not registered with MiniKit app`,
+            };
+          }
         }
         
         return {

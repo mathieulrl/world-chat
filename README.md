@@ -222,6 +222,63 @@ import { quickUserIntegrationTest } from './src/utils/testCompleteUserIntegratio
 await quickUserIntegrationTest();
 ```
 
+### Test MiniKit Contract Registration
+```typescript
+import testMiniKitContractRegistration from './src/utils/test-minikit-contract-registration';
+
+// Test MiniKit contract registration error handling
+await testMiniKitContractRegistration();
+```
+
+## 🔧 MiniKit Contract Registration
+
+### Issue: "invalid_contract" Error
+
+If you encounter the `invalid_contract` error from MiniKit, it means the smart contract is not registered with the MiniKit app. This is a common issue during development.
+
+### Error Details
+```
+Error: invalid_contract
+Description: Transaction contains unrecognized contract address
+Contract: 0x063816286ae3312e759f80Afdb10C8879b30688D
+App ID: app_633eda004e32e457ef84472c6ef7714c
+```
+
+### Solutions
+
+#### 1. **Development Mode (Recommended for Testing)**
+The app automatically handles this error in development mode by returning mock transaction success. This allows you to test the full flow without contract registration.
+
+#### 2. **Register Contract with MiniKit**
+To use real MiniKit transactions:
+1. Open the World App
+2. Go to MiniKit settings
+3. Add contract address: `0x063816286ae3312e759f80Afdb10C8879b30688D`
+4. Select chain: Worldcoin Sepolia (4801)
+5. Confirm registration
+
+#### 3. **Alternative Transaction Methods**
+If contract registration is not possible:
+- Use direct blockchain transactions with MetaMask
+- Implement custom wallet integration
+- Use Web3 providers like WalletConnect
+- Contact Worldcoin support for contract whitelisting
+
+### Testing Contract Registration
+```bash
+# Run the contract registration test
+cd src/utils
+node test-minikit-contract-registration.js
+```
+
+### Enhanced Error Handling
+The app now includes enhanced error handling that:
+- ✅ Detects `invalid_contract` errors
+- ✅ Provides detailed error analysis
+- ✅ Offers registration guidance
+- ✅ Suggests alternative solutions
+- ✅ Returns mock success in development mode
+
 ## 🔒 Security Considerations
 
 ### Encryption
