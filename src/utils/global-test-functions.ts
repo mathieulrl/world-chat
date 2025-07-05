@@ -16,6 +16,8 @@ import { testUIPayment } from './test-ui-payment';
 import { debugMiniKitInputError } from './debug-minikit-input-error';
 import { testReferenceFormat } from './test-reference-format';
 import { testPaymentDisplay } from './test-payment-display';
+import { testMiniKitRealMode, testWorldAppConnection } from './test-minikit-real-mode';
+import { diagnoseIssues } from './diagnose-issues';
 
 // Make these functions available globally for browser console debugging
 declare global {
@@ -38,6 +40,9 @@ declare global {
     debugMiniKitInputError: (error: string) => Promise<void>;
     testReferenceFormat: () => Promise<void>;
     testPaymentDisplay: () => Promise<void>;
+    testMiniKitRealMode: () => Promise<void>;
+    testWorldAppConnection: () => Promise<boolean>;
+    diagnoseIssues: () => Promise<void>;
   }
 }
 
@@ -374,6 +379,15 @@ export function setupGlobalTestFunctions() {
   // Global test function for payment display
   window.testPaymentDisplay = testPaymentDisplay;
 
+  // Global test function for MiniKit real mode
+  window.testMiniKitRealMode = testMiniKitRealMode;
+
+  // Global test function for World App connection
+  window.testWorldAppConnection = testWorldAppConnection;
+
+  // Global test function for diagnose issues
+  window.diagnoseIssues = diagnoseIssues;
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
@@ -394,4 +408,7 @@ export function setupGlobalTestFunctions() {
   console.log('- debugMiniKitInputError(error) - Debug MiniKit input error');
   console.log('- testReferenceFormat() - Test reference format');
   console.log('- testPaymentDisplay() - Test payment display');
+  console.log('- testMiniKitRealMode() - Test MiniKit real mode');
+  console.log('- testWorldAppConnection() - Test World App connection');
+  console.log('- diagnoseIssues() - Diagnose issues');
 }
