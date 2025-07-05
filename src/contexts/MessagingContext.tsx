@@ -346,6 +346,16 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     try {
       setIsLoading(true);
 
+      // Convert amount to decimals for MiniKit
+      const tokenAmount = worldcoinService.tokenToDecimals(amount, token);
+      const humanReadableAmount = parseInt(tokenAmount) / Math.pow(10, token === 'WLD' ? 8 : 6);
+      
+      console.log(`💰 Payment Details:`);
+      console.log(`   Input amount: ${amount} ${token}`);
+      console.log(`   Decimal amount: ${tokenAmount}`);
+      console.log(`   Human readable: ${humanReadableAmount} ${token}`);
+      console.log(`   Recipient: ${recipientAddress}`);
+
       // Initiate payment
       const { id: reference } = await worldcoinService.initiatePayment();
 
@@ -355,21 +365,29 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         to: recipientAddress,
         tokens: [{
           symbol: token,
-          token_amount: worldcoinService.tokenToDecimals(amount, token),
+          token_amount: tokenAmount,
         }],
-        description: `Payment from ${currentUser.username}`,
+        description: `Payment from ${currentUser.username}: ${amount} ${token}`,
       };
+
+      console.log(`📋 Payment Request:`);
+      console.log(`   Reference: ${reference}`);
+      console.log(`   To: ${recipientAddress}`);
+      console.log(`   Token: ${token}`);
+      console.log(`   Amount (decimal): ${tokenAmount}`);
+      console.log(`   Amount (human): ${amount} ${token}`);
+      console.log(`   Description: ${paymentRequest.description}`);
 
       // Execute payment
       const paymentResult = await worldcoinService.executePayment(paymentRequest);
       console.log('Payment executed:', paymentResult);
 
-      // Create payment message
+      // Create payment message with both amounts for clarity
       const paymentMessage: Message = {
         id: crypto.randomUUID(),
         conversationId,
         senderId: currentUser.id,
-        content: `Sent ${amount} ${token} to ${recipientAddress}`,
+        content: `Sent ${amount} ${token} to ${recipientAddress} (${tokenAmount} decimals)`,
         timestamp: new Date(),
         messageType: 'payment',
         paymentData: {
@@ -477,6 +495,16 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
 
       const { amount, token, requesterAddress } = requestMessage.moneyRequestData;
 
+      // Convert amount to decimals for MiniKit
+      const tokenAmount = worldcoinService.tokenToDecimals(amount, token);
+      const humanReadableAmount = parseInt(tokenAmount) / Math.pow(10, token === 'WLD' ? 8 : 6);
+      
+      console.log(`💰 Money Request Payment Details:`);
+      console.log(`   Requested amount: ${amount} ${token}`);
+      console.log(`   Decimal amount: ${tokenAmount}`);
+      console.log(`   Human readable: ${humanReadableAmount} ${token}`);
+      console.log(`   Requester: ${requesterAddress}`);
+
       // Execute payment to the requester
       const { id: reference } = await worldcoinService.initiatePayment();
       const paymentRequest: PaymentRequest = {
@@ -484,20 +512,28 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         to: requesterAddress,
         tokens: [{
           symbol: token,
-          token_amount: worldcoinService.tokenToDecimals(amount, token),
+          token_amount: tokenAmount,
         }],
-        description: `Payment for money request`,
+        description: `Payment for money request: ${amount} ${token}`,
       };
+
+      console.log(`📋 Money Request Payment:`);
+      console.log(`   Reference: ${reference}`);
+      console.log(`   To: ${requesterAddress}`);
+      console.log(`   Token: ${token}`);
+      console.log(`   Amount (decimal): ${tokenAmount}`);
+      console.log(`   Amount (human): ${amount} ${token}`);
+      console.log(`   Description: ${paymentRequest.description}`);
 
       const paymentResult = await worldcoinService.executePayment(paymentRequest);
       console.log('Payment executed for money request:', paymentResult);
 
-      // Create acceptance message
+      // Create acceptance message with both amounts for clarity
       const acceptanceMessage: Message = {
         id: crypto.randomUUID(),
         conversationId,
         senderId: currentUser.id,
-        content: `Accepted money request: ${amount} ${token}`,
+        content: `Accepted money request: ${amount} ${token} (${tokenAmount} decimals)`,
         timestamp: new Date(),
         messageType: 'payment',
         paymentData: {

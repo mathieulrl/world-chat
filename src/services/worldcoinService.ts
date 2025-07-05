@@ -193,10 +193,17 @@ export class WorldcoinService {
     try {
       await this.initializeMiniKit();
 
-      console.log(`Executing payment: ${paymentRequest.reference}`);
-      console.log(`  To: ${paymentRequest.to}`);
-      console.log(`  Tokens: ${JSON.stringify(paymentRequest.tokens)}`);
-      console.log(`  Description: ${paymentRequest.description}`);
+      console.log(`💰 Executing payment: ${paymentRequest.reference}`);
+      console.log(`   To: ${paymentRequest.to}`);
+      console.log(`   Tokens: ${JSON.stringify(paymentRequest.tokens)}`);
+      console.log(`   Description: ${paymentRequest.description}`);
+
+      // Log the amount conversion for clarity
+      for (const token of paymentRequest.tokens) {
+        const decimals = token.symbol === 'WLD' ? 8 : 6;
+        const humanReadable = parseInt(token.token_amount) / Math.pow(10, decimals);
+        console.log(`   ${token.symbol}: ${token.token_amount} decimals = ${humanReadable} ${token.symbol}`);
+      }
 
       // Execute payment using MiniKit
       const result = await MiniKit.commandsAsync.pay({
