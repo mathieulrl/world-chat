@@ -92,12 +92,18 @@ export class ComethTransactionService implements ComethTransactionService {
           {
             to: contractAddress as `0x${string}`,
             data: calldata as `0x${string}`,
-            value: BigInt(0),
+            value: BigInt(0), // Use BigInt like example-cometh
           },
         ],
       };
 
-      console.log(`📤 Transaction object:`, transactionObject);
+      console.log(`📤 Transaction object:`, {
+        ...transactionObject,
+        calls: transactionObject.calls.map(call => ({
+          ...call,
+          value: call.value.toString(), // Convert BigInt to string for logging
+        })),
+      });
 
       // Send transaction using Cometh Connect
       const result = await this.sendTransactionAsync(transactionObject);
@@ -152,7 +158,7 @@ export class ComethTransactionService implements ComethTransactionService {
           {
             to: recipientAddress as `0x${string}`,
             data: calldata as `0x${string}`,
-            value: BigInt(0),
+            value: BigInt(0), // Use BigInt like example-cometh
           },
         ],
       });

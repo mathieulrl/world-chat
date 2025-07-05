@@ -1,6 +1,7 @@
 import { WalrusStorageResult } from './walrusStorageService';
 import { messagingContractAbi } from '../abis/messagingContractAbi';
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, http, createWalletClient } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 import { WorldcoinService } from './worldcoinService';
 
 // Define Worldcoin mainnet chain (chainId 480)
@@ -39,6 +40,8 @@ export class SmartContractService {
   private config: SmartContractConfig;
   private publicClient: any;
   private worldcoinService: WorldcoinService;
+  private privateKey: string | null = null;
+  private walletClient: any = null;
 
   constructor(config: SmartContractConfig) {
     this.config = config;
@@ -55,9 +58,76 @@ export class SmartContractService {
     // Initialize Worldcoin service for writing transactions
     this.worldcoinService = WorldcoinService.getInstance();
 
+    // Initialize private key wallet client if available
+    this.initializePrivateKeyWallet();
+
     console.log(`SmartContractService initialized with contract: ${config.contractAddress}`);
     console.log(`Chain ID: 480 (Worldcoin)`);
     console.log(`RPC URL: ${rpcUrl}`);
+  }
+
+  /**
+   * Initialize private key wallet client
+   */
+  private initializePrivateKeyWallet() {
+    try {
+      const privateKey = import.meta.env.VITE_PRIVATE_KEY;
+      if (privateKey) {
+        this.privateKey = privateKey;
+        const account = privateKeyToAccount(privateKey as `0x${string}`);
+        
+        this.walletClient = createWalletClient({
+          account,
+          chain: worldcoinMainnet,
+          transport: http(this.config.rpcUrl || 'https://worldchain.drpc.org'),
+        });
+        
+        console.log(`✅ Private key wallet client initialized`);
+        console.log(`📋 Wallet address: ${account.address}`);
+      } else {
+        console.log(`⚠️ VITE_PRIVATE_KEY not set - using Worldcoin MiniKit for transactions`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize private key wallet client:', error);
+      console.log(`⚠️ Falling back to Worldcoin MiniKit for transactions`);
+    }
+  }
+
+  /**
+   * Store message metadata on smart contract using private key wallet
+   */
+  async storeMessageMetadataWithPrivateKey(
+    messageRecord: MessageRecord,
+    senderAddress: string
+  ): Promise<string> {
+    if (!this.walletClient) {
+      throw new Error('Private key wallet client not available. Please set VITE_PRIVATE_KEY.');
+    }
+
+    try {
+      console.log(`📝 Storing message metadata with private key wallet for sender: ${senderAddress}`);
+      
+      const result = await this.walletClient.writeContract({
+        address: this.config.contractAddress as `0x${string}`,
+        abi: messagingContractAbi,
+        functionName: 'storeMessage',
+        args: [
+          messageRecord.blobId,
+          messageRecord.conversationId,
+          messageRecord.messageType,
+          messageRecord.suiObjectId || '',
+          messageRecord.txDigest || ''
+        ],
+      });
+
+      console.log(`✅ Message metadata stored with private key wallet!`);
+      console.log(`📋 Transaction hash: ${result}`);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to store message metadata with private key wallet:', error);
+      throw error;
+    }
   }
 
   /**
@@ -119,6 +189,42 @@ export class SmartContractService {
       
       throw error;
     }
+  }
+
+  /**
+   * Store message metadata with fallback to private key wallet
+   */
+  async storeMessageMetadataWithFallback(
+    messageRecord: MessageRecord,
+    senderAddress: string
+  ): Promise<string> {
+    try {
+      // First try with Worldcoin MiniKit
+      return await this.storeMessageMetadata(messageRecord, senderAddress);
+    } catch (error) {
+      console.log(`⚠️ Worldcoin MiniKit failed, trying private key wallet...`);
+      
+      // Fallback to private key wallet
+      return await this.storeMessageMetadataWithPrivateKey(messageRecord, senderAddress);
+    }
+  }
+
+  /**
+   * Get wallet address from private key
+   */
+  getPrivateKeyWalletAddress(): string | null {
+    if (this.privateKey) {
+      const account = privateKeyToAccount(this.privateKey as `0x${string}`);
+      return account.address;
+    }
+    return null;
+  }
+
+  /**
+   * Check if private key wallet is available
+   */
+  isPrivateKeyWalletAvailable(): boolean {
+    return this.walletClient !== null;
   }
 
   /**
@@ -446,6 +552,38 @@ export class SmartContractService {
   }
 
   /**
+   * Test contract writing with private key wallet
+   */
+  async testContractWritingWithPrivateKey(): Promise<boolean> {
+    if (!this.walletClient) {
+      console.error('❌ Private key wallet not available');
+      return false;
+    }
+
+    try {
+      console.log(`Testing contract writing with private key wallet`);
+      
+      // Test with a mock message record
+      const testMessageRecord: MessageRecord = {
+        blobId: 'test_blob_id_private_key',
+        conversationId: 'test_conversation_private_key',
+        senderId: this.getPrivateKeyWalletAddress() || '0x0000000000000000000000000000000000000000',
+        messageType: 'text',
+        timestamp: new Date().toISOString(),
+      };
+
+      const result = await this.storeMessageMetadataWithPrivateKey(testMessageRecord, 'test');
+      
+      console.log(`✅ Contract writing test with private key successful!`);
+      console.log(`  Transaction Hash: ${result}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Contract writing test with private key failed:', error);
+      return false;
+    }
+  }
+
+  /**
    * Get the contract configuration for manual integration
    */
   getContractInfo() {
@@ -513,21 +651,38 @@ export class SmartContractService {
       '  4. Select chain: Worldcoin',
       '  5. Wait for approval from Worldcoin team',
       '',
-      'Option 2: Use Alternative Wallet',
+      'Option 2: Use Private Key Wallet',
+      '  1. Set VITE_PRIVATE_KEY in your .env file',
+      '  2. Use storeMessageMetadataWithPrivateKey() method',
+      '  3. Transactions will be sent from the private key wallet',
+      '',
+      'Option 3: Use Alternative Wallet',
       '  1. Connect to MetaMask or other wallet',
       '  2. Switch to Worldcoin network',
       '  3. Execute transaction directly',
-      '',
-      'Option 3: Use Web3 Provider',
-      '  1. Implement WalletConnect integration',
-      '  2. Connect to any Web3 wallet',
-      '  3. Execute transactions through provider',
       '',
       'Current Status:',
       '  - Contract: ' + this.config.contractAddress,
       '  - Chain: Worldcoin',
       '  - RPC: https://worldchain.drpc.org',
-      '  - MiniKit: Contract not registered'
+      '  - MiniKit: Contract not registered',
+      '  - Private Key Wallet: ' + (this.isPrivateKeyWalletAvailable() ? 'Available' : 'Not available')
     ];
   }
-} 
+}
+
+// Singleton instance
+let smartContractServiceInstance: SmartContractService | null = null;
+
+export const getSmartContractService = (): SmartContractService => {
+  if (!smartContractServiceInstance) {
+    const config: SmartContractConfig = {
+      contractAddress: import.meta.env.VITE_CONTRACT_ADDRESS || '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8',
+      network: 'mainnet',
+      rpcUrl: import.meta.env.VITE_RPC_URL || 'https://worldchain.drpc.org',
+    };
+    
+    smartContractServiceInstance = new SmartContractService(config);
+  }
+  return smartContractServiceInstance;
+}; 

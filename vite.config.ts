@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     allowedHosts: [
       "lemming-improved-specially.ngrok-free.app",
+      "widely-singular-doberman.ngrok-free.app",
       "localhost",
       "127.0.0.1"
     ],

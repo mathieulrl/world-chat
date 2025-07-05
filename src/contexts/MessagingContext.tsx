@@ -4,6 +4,8 @@ import { Message, Conversation, User, PaymentRequest, MoneyRequest } from '../ty
 import { DecentralizedMessagingServiceCometh } from '../services/decentralizedMessagingServiceCometh';
 import { WorldcoinService } from '../services/worldcoinService';
 import { ComethTransactionService } from '../services/comethTransactionService';
+import { getMongoDBService } from '../services/mongoDBService';
+import { getSmartContractService } from '../services/smartContractService';
 
 interface MessagingContextType {
   conversations: Conversation[];
@@ -69,6 +71,12 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children, 
   });
 
   const worldcoinService = WorldcoinService.getInstance();
+  
+  // Initialize MongoDB service
+  const mongoDBService = getMongoDBService();
+
+  // Initialize Smart Contract service
+  const smartContractService = getSmartContractService();
 
   useEffect(() => {
     initializeApp();
@@ -131,17 +139,17 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children, 
 
       console.log('🔍 Getting conversations for address:', userToUse.address);
       
-      // First, try to get message history to see if there are any messages
+      // First, try to get message history from Smart Contract
       try {
-        const messageHistory = await decentralizedService.getMessageHistory(userToUse.address);
-        console.log(`📨 Found ${messageHistory.length} messages for user`);
+        const messageHistory = await smartContractService.getMessageHistory(userToUse.address);
+        console.log(`📨 Found ${messageHistory.length} messages in Smart Contract for user`);
         
         if (messageHistory.length > 0) {
           // Extract unique conversation IDs from messages
           const conversationIds = new Set<string>();
-          messageHistory.forEach((message: Message) => {
-            if (message.conversationId) {
-              conversationIds.add(message.conversationId);
+          messageHistory.forEach((messageRecord: any) => {
+            if (messageRecord.conversationId) {
+              conversationIds.add(messageRecord.conversationId);
             }
           });
           
@@ -164,7 +172,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children, 
             updatedAt: new Date(),
           }));
           
-          console.log('✅ Created conversations from message history:', conversations);
+          console.log('✅ Created conversations from Smart Contract message history:', conversations);
           setConversations(conversations);
           
           // Auto-select the first conversation if none is selected
@@ -176,7 +184,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children, 
           return;
         }
       } catch (error) {
-        console.log('⚠️ Failed to get message history:', error.message);
+        console.log('⚠️ Failed to get message history from Smart Contract:', error.message);
       }
       
       // Fallback: try to get conversations from smart contract
@@ -310,7 +318,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children, 
         messageType: 'text',
       };
 
-      console.log('📤 Storing message in decentralized system...');
+      console.log('💬 Storing message in decentralized system...');
+      
       // Store in decentralized system (Walrus + Smart Contract via Cometh)
       const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
         message,
@@ -319,6 +328,24 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children, 
       );
 
       console.log(`✅ Message sent! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
+
+      // Store message record in Smart Contract
+      try {
+        // Try with private key wallet first, fallback to Worldcoin MiniKit
+        if (smartContractService.isPrivateKeyWalletAvailable()) {
+          console.log('🔑 Using private key wallet for transaction...');
+          const messageRecord = smartContractService.createMessageRecord(walrusResult, message);
+          const smartContractRecordId = await smartContractService.storeMessageMetadataWithPrivateKey(messageRecord, currentUser.address);
+          console.log(`📝 Message record stored in Smart Contract: ${smartContractRecordId}`);
+        } else {
+          console.log('🌍 Using Worldcoin MiniKit for transaction...');
+          const messageRecord = smartContractService.createMessageRecord(walrusResult, message);
+          const smartContractRecordId = await smartContractService.storeMessageMetadata(messageRecord, currentUser.address);
+          console.log(`📝 Message record stored in Smart Contract: ${smartContractRecordId}`);
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to store message record in Smart Contract:', error);
+      }
 
       // Update local state
       setMessages(prev => [...prev, message]);
