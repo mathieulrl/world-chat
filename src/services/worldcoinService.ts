@@ -56,15 +56,9 @@ export class WorldcoinService {
       // Set the app ID for MiniKit
       MiniKit.appId = 'app_633eda004e32e457ef84472c6ef7714c';
       
-      // Check if MiniKit is available by trying to get user info
-      try {
-        await MiniKit.getUserInfo();
-        console.log('✅ Worldcoin MiniKit initialized successfully!');
-        return true;
-      } catch (error) {
-        console.warn('Worldcoin MiniKit is not available. Please install the World App.');
-        return false;
-      }
+      console.log('✅ Worldcoin MiniKit initialized successfully! (Mock mode)');
+      return true;
+      
     } catch (error) {
       console.error('Failed to initialize Worldcoin MiniKit:', error);
       return false;
@@ -78,9 +72,9 @@ export class WorldcoinService {
     try {
       await this.initializeMiniKit();
       
-      // Try to get user info to check if MiniKit is available
-      await MiniKit.getUserInfo();
+      console.log('✅ Worldcoin MiniKit is available (Mock mode)');
       return true;
+      
     } catch (error) {
       console.error('Error checking MiniKit installation:', error);
       return false;
@@ -98,18 +92,16 @@ export class WorldcoinService {
     try {
       await this.initializeMiniKit();
       
-      const user = await MiniKit.getUserInfo();
-      
-      if (!user || !user.walletAddress) {
-        console.log('No user connected to Worldcoin MiniKit');
-        return null;
-      }
-
-      return {
-        address: user.walletAddress,
-        username: user.username || `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}.world`,
-        profilePicture: user.profilePictureUrl,
+      // Return mock user data instead of trying to get from MiniKit API
+      const mockUser = {
+        address: '0x582be5da7d06b2bf6d89c5b4499491c5990fafe4', // mathieu's address
+        username: 'mathieu.3580.world.id',
+        profilePicture: 'https://via.placeholder.com/150/F59E0B/FFFFFF?text=M',
       };
+      
+      console.log('✅ Using mock user data for development');
+      return mockUser;
+      
     } catch (error) {
       console.error('Failed to get current user:', error);
       return null;
@@ -127,17 +119,29 @@ export class WorldcoinService {
     try {
       await this.initializeMiniKit();
       
-      const user = await MiniKit.getUserByAddress(address);
-      
-      if (!user || !user.walletAddress) {
-        return null;
-      }
-
-      return {
-        address: user.walletAddress,
-        username: user.username || `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}.world`,
-        profilePicture: user.profilePictureUrl,
+      // Return mock user data based on address
+      const mockUsers = {
+        '0x582be5da7d06b2bf6d89c5b4499491c5990fafe4': {
+          address: '0x582be5da7d06b2bf6d89c5b4499491c5990fafe4',
+          username: 'mathieu.3580.world.id',
+          profilePicture: 'https://via.placeholder.com/150/F59E0B/FFFFFF?text=M',
+        },
+        '0xa882a2af989de54330f994cf626ea7f5d5edc2fc': {
+          address: '0xa882a2af989de54330f994cf626ea7f5d5edc2fc',
+          username: 'ewan.1300.world.id',
+          profilePicture: 'https://via.placeholder.com/150/10B981/FFFFFF?text=E',
+        },
       };
+      
+      const mockUser = mockUsers[address.toLowerCase()];
+      if (mockUser) {
+        console.log(`✅ Found mock user for address: ${address}`);
+        return mockUser;
+      }
+      
+      console.log(`⚠️ No mock user found for address: ${address}`);
+      return null;
+      
     } catch (error) {
       console.error('Failed to get user by address:', error);
       return null;
