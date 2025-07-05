@@ -16,13 +16,14 @@ async function testContractFunctions() {
 
   const decentralizedService = new DecentralizedMessagingService({
     walrus: {
-      aggregatorUrl: 'https://walrus-aggregator.testnet.mystenlabs.com',
-      publisherUrl: 'https://walrus-publisher.testnet.mystenlabs.com',
+      aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space',
+      publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
       network: 'testnet',
     },
     smartContract: {
       contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D',
       network: 'testnet',
+      rpcUrl: 'https://worldchain-sepolia.drpc.org',
     },
   });
 

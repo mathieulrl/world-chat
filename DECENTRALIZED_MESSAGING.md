@@ -188,9 +188,9 @@ The system supports three types of messages:
 ### Walrus Configuration
 ```typescript
 const walrusConfig = {
-  aggregatorUrl: 'https://walrus-aggregator.testnet.mystenlabs.com',
-  publisherUrl: 'https://walrus-publisher.testnet.mystenlabs.com',
-  network: 'testnet', // or 'mainnet'
+  aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space',
+  publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
+  network: 'testnet',
 };
 ```
 

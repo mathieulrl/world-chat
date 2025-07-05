@@ -53,8 +53,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
   // Initialize decentralized messaging service
   const decentralizedService = new DecentralizedMessagingService({
     walrus: {
-      aggregatorUrl: 'https://walrus-aggregator.testnet.mystenlabs.com',
-      publisherUrl: 'https://walrus-publisher.testnet.mystenlabs.com',
+      aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space',
+      publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
       network: 'testnet',
     },
     smartContract: {

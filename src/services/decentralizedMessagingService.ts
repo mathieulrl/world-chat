@@ -7,6 +7,7 @@ export interface DecentralizedMessagingConfig {
     aggregatorUrl: string;
     publisherUrl: string;
     network: 'mainnet' | 'testnet';
+    mockMode?: boolean;
   };
   smartContract: {
     contractAddress: string;
