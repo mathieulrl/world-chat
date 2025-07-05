@@ -37,6 +37,7 @@ export class SmartContractService {
     
     // Initialize viem client for reading from contract
     const rpcUrl = config.rpcUrl || `https://sepolia.infura.io/v3/${infuraId || 'YOUR_INFURA_KEY'}`;
+    console.log(`Using RPC URL: ${rpcUrl}`);
     
     this.publicClient = createPublicClient({
       chain: sepolia,

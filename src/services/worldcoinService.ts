@@ -37,8 +37,11 @@ export class WorldcoinService {
       chain: sepolia,
       transport: http(`https://sepolia.infura.io/v3/${infuraId || 'YOUR_INFURA_KEY'}`),
     });
+
+    console.log('WorldcoinService initialized with Infura ID:', infuraId)
+    
   }
-  
+
   public static getInstance(): WorldcoinService {
     if (!WorldcoinService.instance) {
       WorldcoinService.instance = new WorldcoinService();
