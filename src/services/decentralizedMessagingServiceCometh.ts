@@ -3,6 +3,7 @@ import { WalrusStorageService, WalrusStorageResult } from './walrusStorageServic
 import { SmartContractService, MessageRecord } from './smartContractService';
 import { getComethConnectService } from './comethConnectService';
 import { getComethConfig } from '../config/cometh';
+import { ComethTransactionService } from './comethTransactionService';
 
 export interface DecentralizedMessagingConfig {
   walrus: {
@@ -51,7 +52,11 @@ export class DecentralizedMessagingServiceCometh {
    * 1. Store message content in Walrus
    * 2. Store metadata in smart contract via Cometh Connect
    */
-  async sendMessage(message: Message, senderAddress: string): Promise<{
+  async sendMessage(
+    message: Message, 
+    senderAddress: string,
+    transactionService?: ComethTransactionService
+  ): Promise<{
     walrusResult: WalrusStorageResult;
     contractTxHash: string;
   }> {
@@ -65,20 +70,35 @@ export class DecentralizedMessagingServiceCometh {
       // Step 2: Store metadata in smart contract via Cometh Connect
       let contractTxHash = 'pending';
       
-      if (this.comethConnectService) {
-        console.log('🔧 Cometh Connect service is available, attempting transaction...');
+      if (transactionService) {
+        console.log('🔧 Cometh transaction service is available, attempting transaction...');
         try {
-          console.log('📝 Preparing transaction for Cometh Connect...');
+          console.log('📝 Calling storeMessageMetadata via Cometh transaction service...');
           
-          // Note: This will need to be updated to use the Cometh Connect hooks
-          // For now, we'll just log that the service is available
-          console.log('✅ Cometh Connect service is ready for transactions');
-          contractTxHash = 'cometh_ready';
+          const result = await transactionService.storeMessageMetadata(
+            walrusResult.blobId,
+            message.conversationId,
+            message.messageType,
+            senderAddress
+          );
           
+          console.log('📊 Cometh transaction result:', result);
+          
+          if (result.success) {
+            contractTxHash = result.transactionHash || 'pending';
+            console.log(`✅ Message metadata stored via Cometh Connect: ${contractTxHash}`);
+          } else {
+            console.warn(`⚠️ Cometh transaction failed: ${result.error}`);
+            contractTxHash = 'failed';
+          }
         } catch (error) {
           console.error('❌ Cometh Connect transaction error:', error);
           contractTxHash = 'error';
         }
+      } else if (this.comethConnectService) {
+        console.log('🔧 Cometh Connect service is available, but no transaction service provided');
+        console.log('✅ Cometh Connect service is ready for transactions');
+        contractTxHash = 'cometh_ready_no_service';
       } else {
         console.warn('⚠️ Cometh Connect service not available, skipping contract storage');
         console.log('🔍 Cometh Connect service status:', this.comethConnectService);

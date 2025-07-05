@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
-import { MessagingApp } from "../components/MessagingApp";
+import { MessagingAppWithTransactions } from "../components/MessagingAppWithTransactions";
 
 const Index = () => {
   const [isVerified, setIsVerified] = useState<boolean>(false);
@@ -97,7 +97,7 @@ const Index = () => {
   if (isVerified) {
     return (
       <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-100">
-        <MessagingApp />
+        <MessagingAppWithTransactions />
       </div>
     );
   }

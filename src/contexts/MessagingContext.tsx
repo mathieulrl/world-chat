@@ -3,6 +3,7 @@ import { MiniKit } from '@worldcoin/minikit-js';
 import { Message, Conversation, User, PaymentRequest, MoneyRequest } from '../types/messaging';
 import { DecentralizedMessagingServiceCometh } from '../services/decentralizedMessagingServiceCometh';
 import { WorldcoinService } from '../services/worldcoinService';
+import { ComethTransactionService } from '../services/comethTransactionService';
 
 interface MessagingContextType {
   conversations: Conversation[];
@@ -41,9 +42,10 @@ export const useMessaging = () => {
 
 interface MessagingProviderProps {
   children: ReactNode;
+  transactionService?: ComethTransactionService;
 }
 
-export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }) => {
+export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children, transactionService }) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -312,7 +314,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       // Store in decentralized system (Walrus + Smart Contract via Cometh)
       const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
         message,
-        currentUser.address
+        currentUser.address,
+        transactionService
       );
 
       console.log(`✅ Message sent! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
@@ -419,7 +422,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       // Store payment message in decentralized system via Cometh
       const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
         paymentMessage,
-        currentUser.address
+        currentUser.address,
+        transactionService
       );
 
       console.log(`Payment message stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
@@ -474,7 +478,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       // Store money request message in decentralized system via Cometh
       const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
         requestMessage,
-        currentUser.address
+        currentUser.address,
+        transactionService
       );
 
       console.log(`Money request stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
@@ -565,7 +570,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       // Store acceptance message in decentralized system via Cometh
       const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
         acceptanceMessage,
-        currentUser.address
+        currentUser.address,
+        transactionService
       );
 
       console.log(`Acceptance message stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
@@ -611,7 +617,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       // Store decline message in decentralized system via Cometh
       const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
         declineMessage,
-        currentUser!.address
+        currentUser!.address,
+        transactionService
       );
 
       console.log(`Decline message stored! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
