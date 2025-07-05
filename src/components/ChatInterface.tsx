@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { MessageBubble } from './MessageBubble';
 import { useMessaging } from '../contexts/MessagingContext';
-import { Send, DollarSign, Download, MessageCircle } from 'lucide-react';
+import { Send, DollarSign, Download, MessageCircle, RefreshCw } from 'lucide-react';
 
 export const ChatInterface: React.FC = () => {
   const { 
@@ -19,6 +19,7 @@ export const ChatInterface: React.FC = () => {
     sendMessage, 
     sendPayment, 
     requestMoney,
+    refreshMessageHistory,
     currentUser,
     isLoading 
   } = useMessaging();
@@ -99,19 +100,30 @@ export const ChatInterface: React.FC = () => {
     <div className="flex-1 flex flex-col h-screen">
       {/* Header */}
       <div className="p-4 border-b border-border bg-background">
-        <div className="flex items-center space-x-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={otherParticipant?.profilePicture} />
-            <AvatarFallback>
-              {otherParticipant?.username?.charAt(0).toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h2 className="font-semibold">{otherParticipant?.username || 'Unknown User'}</h2>
-            <p className="text-sm text-muted-foreground">
-              {otherParticipant?.address || 'No address'}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={otherParticipant?.profilePicture} />
+              <AvatarFallback>
+                {otherParticipant?.username?.charAt(0).toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="font-semibold">{otherParticipant?.username || 'Unknown User'}</h2>
+              <p className="text-sm text-muted-foreground">
+                {otherParticipant?.address || 'No address'}
+              </p>
+            </div>
           </div>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={refreshMessageHistory}
+            disabled={isLoading}
+            title="Refresh messages"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
       </div>
 

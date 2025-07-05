@@ -25,6 +25,7 @@ interface MessagingContextType {
   searchMessages: (query: string) => Promise<Message[]>;
   loadMessages: (conversationId: string) => Promise<void>;
   loadConversations: () => Promise<void>;
+  refreshMessageHistory: () => Promise<void>;
   isCreatingConversation: boolean;
 }
 
@@ -152,8 +153,8 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
                 profilePicture: userToUse.profilePicture,
               }
             ],
-            unreadCount: 0,
-            createdAt: new Date(),
+            unreadCount: 0, // You can implement unread logic if needed
+            createdAt: new Date(), // Use current date as fallback
             updatedAt: new Date(),
           }));
           
@@ -634,6 +635,35 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     }
   };
 
+  const refreshMessageHistory = async () => {
+    try {
+      console.log('🔄 Refreshing message history...');
+      setIsLoading(true);
+      setError(null);
+      
+      if (!currentUser) {
+        console.warn('⚠️ No current user available for refresh');
+        return;
+      }
+      
+      // Reload conversations
+      await loadConversations(currentUser);
+      
+      // If there's a current conversation, reload its messages
+      if (currentConversation) {
+        console.log(`📨 Reloading messages for current conversation: ${currentConversation.id}`);
+        await loadMessages(currentConversation.id);
+      }
+      
+      console.log('✅ Message history refreshed successfully');
+    } catch (err) {
+      console.error('❌ Failed to refresh message history:', err);
+      setError(err instanceof Error ? err.message : 'Failed to refresh message history');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: MessagingContextType = {
     conversations,
     currentConversation,
@@ -653,6 +683,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     searchMessages,
     loadMessages,
     loadConversations,
+    refreshMessageHistory,
     isCreatingConversation,
   };
 

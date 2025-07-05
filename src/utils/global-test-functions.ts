@@ -12,6 +12,7 @@ declare global {
     testUserMessages: (userAddress: string) => Promise<void>;
     testConversationMessages: (conversationId: string) => Promise<void>;
     debugUser: (userAddress: string) => Promise<void>;
+    quickDebug: () => Promise<void>;
   }
 }
 
@@ -166,15 +167,71 @@ export function setupGlobalTestFunctions() {
     }
   };
 
+  // Global quick debug function
+  window.quickDebug = async () => {
+    console.log('🔍 Quick Debug - Message History Refresh Issue');
+    console.log('==============================================');
+    
+    const testUserAddress = '0x582be5da7d06b2bf6d89c5b4499491c5990fafe4';
+    
+    console.log(`\n🔍 Testing user: ${testUserAddress}`);
+    
+    try {
+      // Step 1: Check smart contract for messages
+      console.log('\n📊 Step 1: Checking smart contract for messages...');
+      const userMessages = await smartContractService.getMessageHistory(testUserAddress);
+      console.log(`✅ Found ${userMessages.length} messages in smart contract`);
+      
+      if (userMessages.length > 0) {
+        console.log('📝 Sample message from smart contract:', {
+          blobId: userMessages[0].blobId,
+          conversationId: userMessages[0].conversationId,
+          messageType: userMessages[0].messageType,
+          timestamp: userMessages[0].timestamp,
+        });
+        
+        // Step 2: Try to retrieve the first message from Walrus
+        const firstMessage = userMessages[0];
+        console.log(`\n📨 Step 2: Trying to retrieve message from Walrus: ${firstMessage.blobId}`);
+        
+        try {
+          const retrievedMessage = await decentralizedService.retrieveMessage(firstMessage.blobId);
+          console.log('✅ Successfully retrieved message from Walrus:', {
+            id: retrievedMessage.id,
+            content: retrievedMessage.content.substring(0, 50) + '...',
+            conversationId: retrievedMessage.conversationId,
+            messageType: retrievedMessage.messageType,
+            timestamp: retrievedMessage.timestamp,
+          });
+        } catch (error) {
+          console.log(`❌ Failed to retrieve message from Walrus: ${error.message}`);
+        }
+      } else {
+        console.log('ℹ️ No messages found in smart contract');
+      }
+      
+      // Step 3: Check conversation IDs
+      console.log('\n💬 Step 3: Checking conversation IDs...');
+      const userConversations = await smartContractService.getUserConversations(testUserAddress);
+      console.log(`✅ Found ${userConversations.length} conversation IDs`);
+      
+      if (userConversations.length > 0) {
+        console.log('📋 Conversation IDs:', userConversations);
+      }
+      
+    } catch (error) {
+      console.error('❌ Quick debug failed:', error);
+    }
+    
+    console.log('\n✅ Quick debug complete');
+    console.log('=======================');
+  };
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
   console.log('- testUserMessages(userAddress)');
   console.log('- testConversationMessages(conversationId)');
   console.log('- debugUser(userAddress)');
+  console.log('- quickDebug()');
 }
-
-// Export for use in main app
-export default {
-  setupGlobalTestFunctions
-}; 
