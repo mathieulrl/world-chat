@@ -98,9 +98,13 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         };
         setCurrentUser(currentUserData);
         
-        // Load conversations after user is set
-        console.log('💬 Loading conversations for user:', currentUserData.address);
+        // Load conversations and message history immediately
+        console.log('💬 Loading conversations and message history for user:', currentUserData.address);
         await loadConversations(currentUserData);
+        
+        // Also refresh message history to ensure we have the latest data
+        console.log('🔄 Refreshing message history...');
+        await refreshMessageHistory();
       } else {
         console.error('❌ Failed to get current user');
         setError('Failed to get current user');
@@ -160,6 +164,13 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
           
           console.log('✅ Created conversations from message history:', conversations);
           setConversations(conversations);
+          
+          // Auto-select the first conversation if none is selected
+          if (conversations.length > 0 && !currentConversation) {
+            console.log('📋 Auto-selecting first conversation:', conversations[0].id);
+            selectConversation(conversations[0].id);
+          }
+          
           return;
         }
       } catch (error) {
@@ -193,6 +204,12 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         
         console.log('✅ Processed conversations:', conversations);
         setConversations(conversations);
+        
+        // Auto-select the first conversation if none is selected
+        if (conversations.length > 0 && !currentConversation) {
+          console.log('📋 Auto-selecting first conversation:', conversations[0].id);
+          selectConversation(conversations[0].id);
+        }
       } catch (error) {
         console.log('⚠️ Failed to get conversations from service:', error.message);
         console.log('ℹ️ Setting empty conversations array');
@@ -691,6 +708,12 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       if (currentConversation) {
         console.log(`📨 Reloading messages for current conversation: ${currentConversation.id}`);
         await loadMessages(currentConversation.id);
+      } else {
+        // If no conversation is selected but we have conversations, select the first one
+        if (conversations.length > 0) {
+          console.log(`📋 Auto-selecting first conversation: ${conversations[0].id}`);
+          selectConversation(conversations[0].id);
+        }
       }
       
       console.log('✅ Message history refreshed successfully');

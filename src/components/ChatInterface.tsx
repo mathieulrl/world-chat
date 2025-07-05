@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { MessageBubble } from './MessageBubble';
 import { useMessaging } from '../contexts/MessagingContext';
-import { Send, DollarSign, Download, MessageCircle, Menu, RefreshCw } from 'lucide-react';
+import { Send, DollarSign, Download, MessageCircle, Menu, RefreshCw, Bug } from 'lucide-react';
+import { diagnoseIssues } from '../utils/diagnose-issues';
 
 interface ChatInterfaceProps {
   onToggleMobileSidebar?: () => void;
@@ -36,6 +37,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onToggleMobileSide
   const [requestAmount, setRequestAmount] = useState('');
   const [requestToken, setRequestToken] = useState<'WLD' | 'USDC'>('WLD');
   const [requestDescription, setRequestDescription] = useState('');
+  const [isDebugRunning, setIsDebugRunning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -293,6 +295,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onToggleMobileSide
             <Send className="h-4 w-4" />
           </Button>
         </div>
+      </div>
+
+      {/* Debug Button */}
+      <div className="p-3 md:p-4 border-t border-border bg-background">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          disabled={isLoading || isDebugRunning}
+          onClick={async () => {
+            setIsDebugRunning(true);
+            try {
+              console.log('🔧 Running diagnostics...');
+              await diagnoseIssues();
+              console.log('✅ Diagnostics complete! Check console for results.');
+            } catch (error) {
+              console.error('❌ Debug failed:', error);
+            } finally {
+              setIsDebugRunning(false);
+            }
+          }}
+          title="Debug Issues"
+        >
+          <Bug className={`h-4 w-4 ${isDebugRunning ? 'animate-pulse' : ''}`} />
+        </Button>
       </div>
     </div>
   );
