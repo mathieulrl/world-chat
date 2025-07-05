@@ -8,6 +8,11 @@ import { testSmartContractReading } from './test-smart-contract-reading';
 import { testContractAccessibility } from './test-contract-accessibility';
 import { runAllTests } from './run-tests';
 import { testMiniKitTransaction } from './test-minikit-transaction';
+import { debugMiniKitApproval } from './debug-minikit-approval';
+import { verifyTransactionHash } from './verify-transaction-hash';
+import { debugPaymentAmount } from './debug-payment-amount';
+import { testPaymentFlow } from './test-payment-flow';
+import { testUIPayment } from './test-ui-payment';
 
 // Make these functions available globally for browser console debugging
 declare global {
@@ -22,6 +27,11 @@ declare global {
     testContractAccessibility: () => Promise<void>;
     runAllTests: () => Promise<any>;
     testMiniKitTransaction: () => Promise<void>;
+    debugMiniKitApproval: () => Promise<void>;
+    verifyTransactionHash: (hash: string) => Promise<void>;
+    debugPaymentAmount: (amount: string) => Promise<void>;
+    testPaymentFlow: () => Promise<void>;
+    testUIPayment: () => Promise<void>;
   }
 }
 
@@ -334,6 +344,21 @@ export function setupGlobalTestFunctions() {
   // Global test function for MiniKit transaction
   window.testMiniKitTransaction = testMiniKitTransaction;
 
+  // Global debug function for MiniKit approval issue
+  window.debugMiniKitApproval = debugMiniKitApproval;
+
+  // Global function to verify transaction hash
+  window.verifyTransactionHash = verifyTransactionHash;
+
+  // Global function to debug payment amount
+  window.debugPaymentAmount = debugPaymentAmount;
+
+  // Global test function for payment flow
+  window.testPaymentFlow = testPaymentFlow;
+
+  // Global test function for UI payment
+  window.testUIPayment = testUIPayment;
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
@@ -346,4 +371,9 @@ export function setupGlobalTestFunctions() {
   console.log('- testContractAccessibility()');
   console.log('- runAllTests() - Run all diagnostic tests');
   console.log('- testMiniKitTransaction() - Test MiniKit transaction sending');
+  console.log('- debugMiniKitApproval() - Debug MiniKit approval issue');
+  console.log('- verifyTransactionHash(hash) - Verify transaction hash status');
+  console.log('- debugPaymentAmount(amount) - Debug payment amount');
+  console.log('- testPaymentFlow() - Test payment flow');
+  console.log('- testUIPayment() - Test UI payment');
 }

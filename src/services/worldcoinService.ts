@@ -329,15 +329,26 @@ export class WorldcoinService {
 
       // Execute the transaction using MiniKit
       console.log(`📤 Sending transaction via MiniKit...`);
+      console.log(`📋 Transaction payload:`, {
+        transaction: [transaction],
+        formatPayload: true,
+      });
+      
       const result = await MiniKit.commandsAsync.sendTransaction({
         transaction: [transaction],
         formatPayload: true, // Let MiniKit format the payload
       });
 
       console.log(`📥 MiniKit response:`, result);
+      console.log(`📊 Final payload:`, result.finalPayload);
+      console.log(`🔍 Status: ${result.finalPayload.status}`);
       
+      // Handle the response based on status
       if (result.finalPayload.status === 'success') {
-        const transactionId = result.finalPayload.transaction_id;
+        const successPayload = result.finalPayload as any;
+        console.log(`🆔 Transaction ID: ${successPayload.transaction_id || 'N/A'}`);
+        
+        const transactionId = successPayload.transaction_id;
         console.log(`✅ MiniKit transaction successful!`);
         console.log(`  Transaction ID: ${transactionId}`);
         console.log(`  Status: ${result.finalPayload.status}`);
@@ -361,26 +372,34 @@ export class WorldcoinService {
           };
         }
       } else {
+        const errorPayload = result.finalPayload as any;
+        console.log(`🆔 Transaction ID: ${errorPayload.transaction_id || 'N/A'}`);
+        console.log(`❌ Error Code: ${errorPayload.error_code || 'N/A'}`);
+        
         console.log(`❌ MiniKit transaction failed:`);
-        console.log(`  Error Code: ${result.finalPayload.error_code}`);
+        console.log(`  Error Code: ${errorPayload.error_code}`);
         console.log(`  Error Details:`, result.finalPayload);
         
         // Handle specific error cases
-        if (result.finalPayload.error_code === 'invalid_contract') {
+        if (errorPayload.error_code === 'invalid_contract') {
           console.log(`⚠️ Contract not registered with MiniKit`);
           console.log(`   Contract: ${transactionRequest.contractAddress}`);
           console.log(`   Please register the contract in the Worldcoin Developer Portal`);
-        } else if (result.finalPayload.error_code === 'simulation_failed') {
+        } else if (errorPayload.error_code === 'simulation_failed') {
           console.log(`⚠️ Transaction simulation failed`);
-          const debugUrl = (result.finalPayload as any).debug_url;
+          const debugUrl = errorPayload.debug_url;
           if (debugUrl) {
             console.log(`   Debug URL: ${debugUrl}`);
           }
+        } else if (errorPayload.error_code === 'user_rejected') {
+          console.log(`⚠️ User rejected the transaction`);
+        } else {
+          console.log(`⚠️ Unknown error: ${errorPayload.error_code}`);
         }
         
         return {
           success: false,
-          error: `MiniKit error: ${result.finalPayload.error_code}`,
+          error: `MiniKit error: ${errorPayload.error_code}`,
         };
       }
 
