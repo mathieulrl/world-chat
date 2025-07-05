@@ -26,7 +26,7 @@ export class WorldcoinService {
   
   private constructor() {
     // Get Infura ID from environment variable
-    const infuraId = import.meta.env.VITE_INFURA_ID || process.env.INFURA_ID;
+    const infuraId = "e34629cc701f45ffbdb1d83ae332b4cf"
     
     if (!infuraId) {
       console.warn('⚠️ INFURA_ID not found in environment variables. Please add INFURA_ID to your .env file.');
@@ -39,7 +39,7 @@ export class WorldcoinService {
     });
 
     console.log('WorldcoinService initialized with Infura ID:', infuraId)
-    
+
   }
 
   public static getInstance(): WorldcoinService {
