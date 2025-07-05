@@ -60,9 +60,9 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       network: 'testnet',
     },
     smartContract: {
-      contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D', // Updated contract address
-      network: 'testnet',
-      rpcUrl: 'https://worldchain-sepolia.drpc.org',
+  contractAddress: '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8', // Updated contract address
+      network: 'mainnet', // Changed to mainnet
+      rpcUrl: 'https://worldchain.drpc.org', // Updated to mainnet RPC
     },
   });
 

@@ -49,9 +49,9 @@ declare global {
 export function setupGlobalTestFunctions() {
   // Initialize services
   const smartContractService = new SmartContractService({
-    contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D',
-    network: 'testnet',
-    rpcUrl: 'https://worldchain-sepolia.drpc.org',
+    contractAddress: '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8',
+    network: 'mainnet',
+    rpcUrl: 'https://worldchain.drpc.org',
   });
   
   const decentralizedService = new DecentralizedMessagingService({
@@ -61,9 +61,9 @@ export function setupGlobalTestFunctions() {
       network: 'testnet',
     },
     smartContract: {
-      contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D',
-      network: 'testnet',
-      rpcUrl: 'https://worldchain-sepolia.drpc.org',
+      contractAddress: '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8',
+      network: 'mainnet',
+      rpcUrl: 'https://worldchain.drpc.org',
     },
   });
 

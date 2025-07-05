@@ -20,9 +20,9 @@ export async function diagnoseIssues() {
     console.log('\n📋 Test 2: Checking contract accessibility...');
     try {
       const smartContractService = new SmartContractService({
-        contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D',
-        network: 'testnet',
-        rpcUrl: 'https://worldchain-sepolia.drpc.org',
+        contractAddress: '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8',
+        network: 'mainnet',
+        rpcUrl: 'https://worldchain.drpc.org',
       });
       
       const messageCount = await smartContractService.getUserMessageCount('0x582be5da7d06b2bf6d89c5b4499491c5990fafe4');
@@ -36,7 +36,7 @@ export async function diagnoseIssues() {
     try {
       const result = await MiniKit.commandsAsync.sendTransaction({
         transaction: [{
-          address: '0x063816286ae3312e759f80Afdb10C8879b30688D',
+          address: '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8',
           abi: [{
             type: 'function',
             name: 'storeMessage',

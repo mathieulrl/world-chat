@@ -3,19 +3,19 @@ import { messagingContractAbi } from '../abis/messagingContractAbi';
 import { createPublicClient, http } from 'viem';
 import { WorldcoinService } from './worldcoinService';
 
-// Define Worldcoin Sepolia chain (chainId 4801)
-const worldcoinSepolia = {
-  id: 4801,
-  name: 'Worldcoin Sepolia',
-  network: 'worldcoin-sepolia',
+// Define Worldcoin mainnet chain (chainId 480)
+const worldcoinMainnet = {
+  id: 480,
+  name: 'Worldcoin',
+  network: 'worldcoin',
   nativeCurrency: {
     decimals: 18,
     name: 'Ether',
     symbol: 'ETH',
   },
   rpcUrls: {
-    default: { http: ['https://worldchain-sepolia.drpc.org'] },
-    public: { http: ['https://worldchain-sepolia.drpc.org'] },
+    default: { http: ['https://worldchain.drpc.org'] },
+    public: { http: ['https://worldchain.drpc.org'] },
   },
 } as const;
 
@@ -44,11 +44,11 @@ export class SmartContractService {
     this.config = config;
     
     // Initialize viem client for reading from contract
-    const rpcUrl = config.rpcUrl || 'https://worldchain-sepolia.drpc.org';
+    const rpcUrl = config.rpcUrl || 'https://worldchain.drpc.org';
     console.log(`Using RPC URL: ${rpcUrl}`);
     
     this.publicClient = createPublicClient({
-      chain: worldcoinSepolia,
+      chain: worldcoinMainnet,
       transport: http(rpcUrl),
     });
 
@@ -56,7 +56,7 @@ export class SmartContractService {
     this.worldcoinService = WorldcoinService.getInstance();
 
     console.log(`SmartContractService initialized with contract: ${config.contractAddress}`);
-    console.log(`Chain ID: 4801 (Worldcoin Sepolia)`);
+    console.log(`Chain ID: 480 (Worldcoin)`);
     console.log(`RPC URL: ${rpcUrl}`);
   }
 
@@ -510,12 +510,12 @@ export class SmartContractService {
       '  1. Go to Worldcoin Developer Portal',
       '  2. Navigate to Configuration → Advanced',
       '  3. Add contract address: ' + this.config.contractAddress,
-      '  4. Select chain: Worldcoin Sepolia (4801)',
+      '  4. Select chain: Worldcoin',
       '  5. Wait for approval from Worldcoin team',
       '',
       'Option 2: Use Alternative Wallet',
       '  1. Connect to MetaMask or other wallet',
-      '  2. Switch to Worldcoin Sepolia network',
+      '  2. Switch to Worldcoin network',
       '  3. Execute transaction directly',
       '',
       'Option 3: Use Web3 Provider',
@@ -525,8 +525,8 @@ export class SmartContractService {
       '',
       'Current Status:',
       '  - Contract: ' + this.config.contractAddress,
-      '  - Chain: Worldcoin Sepolia (4801)',
-      '  - RPC: https://worldchain-sepolia.drpc.org',
+      '  - Chain: Worldcoin',
+      '  - RPC: https://worldchain.drpc.org',
       '  - MiniKit: Contract not registered'
     ];
   }
