@@ -4,13 +4,10 @@ import { ChatInterface } from './ChatInterface';
 import { useMessaging } from '../contexts/MessagingContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
-import { ComethTest } from './ComethTest';
-import { Button } from './ui/button';
 
 export const MessagingApp: React.FC = () => {
   const { isLoading, error, currentConversation } = useMessaging();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [showComethTest, setShowComethTest] = useState(false);
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -60,25 +57,6 @@ export const MessagingApp: React.FC = () => {
         bg-background border-r border-border
       `}>
         <ConversationList onMobileClose={closeMobileSidebar} />
-        
-        {/* Cometh Test Toggle */}
-        <div className="p-4 border-t">
-          <Button 
-            onClick={() => setShowComethTest(!showComethTest)}
-            variant="outline"
-            size="sm"
-            className="w-full"
-          >
-            {showComethTest ? 'Hide' : 'Show'} Cometh Test
-          </Button>
-        </div>
-        
-        {/* Cometh Test Panel */}
-        {showComethTest && (
-          <div className="p-4 border-t">
-            <ComethTest />
-          </div>
-        )}
       </div>
 
       {/* Main Chat Area */}
