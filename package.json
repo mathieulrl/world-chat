@@ -11,6 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@cometh/connect-react-hooks": "^1.0.1",
+    "@cometh/connect-sdk-4337": "^1.0.1",
     "@hookform/resolvers": "^3.9.0",
     "@mysten/sui": "^1.35.0",
     "@mysten/walrus": "^0.2.1",
@@ -63,6 +65,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
     "viem": "^2.31.7",
+    "wagmi": "^2.14.12",
     "zod": "^3.23.8"
   },
   "devDependencies": {
