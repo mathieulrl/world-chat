@@ -19,6 +19,9 @@ import { testPaymentDisplay } from './test-payment-display';
 import { testMiniKitRealMode, testWorldAppConnection } from './test-minikit-real-mode';
 import { diagnoseIssues } from './diagnose-issues';
 import { debugComethConfig } from './debug-cometh';
+import { testComethConnection } from './test-cometh-connection';
+import { debugComethTransaction } from './debug-cometh-transaction';
+import { testComethImplementation } from './test-cometh-implementation';
 
 // Make these functions available globally for browser console debugging
 declare global {
@@ -45,6 +48,9 @@ declare global {
     testWorldAppConnection: () => Promise<boolean>;
     diagnoseIssues: () => Promise<void>;
     debugComethConfig: () => void;
+    testComethConnection: () => Promise<boolean>;
+    debugComethTransaction: () => boolean;
+    testComethImplementation: () => boolean;
   }
 }
 
@@ -393,6 +399,15 @@ export function setupGlobalTestFunctions() {
   // Add debug functions to global scope for browser console access
   (window as any).debugComethConfig = debugComethConfig;
 
+  // Add testComethConnection function
+  window.testComethConnection = testComethConnection;
+
+  // Add debugComethTransaction function
+  window.debugComethTransaction = debugComethTransaction;
+
+  // Add testComethImplementation function
+  window.testComethImplementation = testComethImplementation;
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
@@ -417,4 +432,7 @@ export function setupGlobalTestFunctions() {
   console.log('- testWorldAppConnection() - Test World App connection');
   console.log('- diagnoseIssues() - Diagnose issues');
   console.log('- debugComethConfig() - Check Cometh environment variables and config');
+  console.log('- testComethConnection() - Test Cometh connection');
+  console.log('- debugComethTransaction() - Debug Cometh transaction');
+  console.log('- testComethImplementation() - Test Cometh implementation');
 }

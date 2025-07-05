@@ -3,21 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Wallet, Loader2 } from 'lucide-react';
-import { useComethConnect } from '@/hooks/useComethConnect';
+import { useAccount, useConnect } from '@cometh/connect-react-hooks';
 
 interface ComethWalletConnectProps {
   onWalletConnected: () => void;
 }
 
 export const ComethWalletConnect: React.FC<ComethWalletConnectProps> = ({ onWalletConnected }) => {
-  const {
-    address,
-    isConnected,
-    isPending,
-    error,
-    connectWallet,
-    disconnectWallet,
-  } = useComethConnect();
+  const { address, isConnected } = useAccount();
+  const { connect, error, isPending } = useConnect();
 
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle');
 
@@ -26,12 +20,11 @@ export const ComethWalletConnect: React.FC<ComethWalletConnectProps> = ({ onWall
       setConnectionStatus('connecting');
       console.log('🔗 Connecting to Cometh wallet...');
       
-      await connectWallet();
+      await connect();
       
       setConnectionStatus('success');
       console.log('✅ Cometh wallet connected successfully');
       
-      // Notify parent component that wallet is connected
       setTimeout(() => {
         onWalletConnected();
       }, 1000);
@@ -42,17 +35,6 @@ export const ComethWalletConnect: React.FC<ComethWalletConnectProps> = ({ onWall
     }
   };
 
-  const handleDisconnect = async () => {
-    try {
-      await disconnectWallet();
-      setConnectionStatus('idle');
-      console.log('✅ Cometh wallet disconnected');
-    } catch (error) {
-      console.error('❌ Failed to disconnect Cometh wallet:', error);
-    }
-  };
-
-  // If already connected, show success state
   if (isConnected && address) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -81,14 +63,6 @@ export const ComethWalletConnect: React.FC<ComethWalletConnectProps> = ({ onWall
                 size="lg"
               >
                 Continue to Messaging App
-              </Button>
-              
-              <Button 
-                onClick={handleDisconnect}
-                variant="outline"
-                className="w-full"
-              >
-                Disconnect Wallet
               </Button>
             </div>
           </CardContent>

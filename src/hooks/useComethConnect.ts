@@ -42,6 +42,14 @@ export const useComethConnect = () => {
     }
   }, [isConnected]);
 
+  // Store address in localStorage like example-cometh
+  useEffect(() => {
+    if (address) {
+      localStorage.setItem("walletAddress", address);
+      console.log('✅ Cometh wallet connected:', address);
+    }
+  }, [address]);
+
   return {
     address,
     isConnected,

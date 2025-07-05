@@ -58,7 +58,14 @@ export class ComethTransactionService implements ComethTransactionService {
       // Contract address for message storage
       const contractAddress = '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8';
 
-      // Encode the function call
+      // The storeMessage function expects 5 parameters:
+      // - blobId (string)
+      // - conversationId (string) 
+      // - messageType (string)
+      // - suiObjectId (string) - for Sui integration (we'll use empty string)
+      // - txDigest (string) - for Sui integration (we'll use empty string)
+      
+      // Encode the function call with correct parameters
       const calldata = encodeFunctionData({
         abi: messagingContractAbi,
         functionName: 'storeMessage',
@@ -66,7 +73,8 @@ export class ComethTransactionService implements ComethTransactionService {
           blobId,
           conversationId,
           messageType,
-          senderAddress,
+          '', // suiObjectId - empty string for now
+          '', // txDigest - empty string for now
         ],
       });
 
