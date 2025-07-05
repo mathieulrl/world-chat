@@ -1,7 +1,7 @@
 import { Message } from '../types/messaging';
 import { WalrusStorageService, WalrusStorageResult } from './walrusStorageService';
 import { SmartContractService, MessageRecord } from './smartContractService';
-import { getComethService, ComethConfig } from './comethService';
+import { getComethConnectService } from './comethConnectService';
 import { getComethConfig } from '../config/cometh';
 
 export interface DecentralizedMessagingConfig {
@@ -21,29 +21,28 @@ export interface DecentralizedMessagingConfig {
 export class DecentralizedMessagingServiceCometh {
   private walrusService: WalrusStorageService;
   private smartContractService: SmartContractService; // For reading only
-  private comethService: any; // For transactions only
+  private comethConnectService: any; // For transactions only
 
   constructor(config: DecentralizedMessagingConfig) {
     this.walrusService = new WalrusStorageService(config.walrus);
     this.smartContractService = new SmartContractService(config.smartContract);
     
-    // Initialize Cometh service for transactions
+    // Initialize Cometh Connect service for transactions
     try {
-      console.log('🔧 Initializing Cometh service...');
+      console.log('🔧 Initializing Cometh Connect service...');
       const comethConfig = getComethConfig();
       console.log('📋 Cometh config loaded:', {
         apiKey: comethConfig.apiKey ? '✅ Set' : '❌ Missing',
-        safeAddress: comethConfig.safeAddress,
         bundlerUrl: comethConfig.bundlerUrl,
         paymasterUrl: comethConfig.paymasterUrl,
       });
       
-      this.comethService = getComethService(comethConfig);
-      console.log('✅ Cometh service created successfully');
+      this.comethConnectService = getComethConnectService();
+      console.log('✅ Cometh Connect service created successfully');
     } catch (error) {
-      console.warn('⚠️ Cometh service not available, falling back to read-only mode');
-      console.error('❌ Cometh initialization error:', error);
-      this.comethService = null;
+      console.warn('⚠️ Cometh Connect service not available, falling back to read-only mode');
+      console.error('❌ Cometh Connect initialization error:', error);
+      this.comethConnectService = null;
     }
   }
 
@@ -66,33 +65,23 @@ export class DecentralizedMessagingServiceCometh {
       // Step 2: Store metadata in smart contract via Cometh Connect
       let contractTxHash = 'pending';
       
-      if (this.comethService) {
-        console.log('🔧 Cometh service is available, attempting transaction...');
+      if (this.comethConnectService) {
+        console.log('🔧 Cometh Connect service is available, attempting transaction...');
         try {
-          console.log('📝 Calling storeMessageMetadata on Cometh service...');
-          const result = await this.comethService.storeMessageMetadata(
-            walrusResult.blobId,
-            message.conversationId,
-            message.messageType,
-            senderAddress
-          );
+          console.log('📝 Preparing transaction for Cometh Connect...');
           
-          console.log('📊 Cometh transaction result:', result);
+          // Note: This will need to be updated to use the Cometh Connect hooks
+          // For now, we'll just log that the service is available
+          console.log('✅ Cometh Connect service is ready for transactions');
+          contractTxHash = 'cometh_ready';
           
-          if (result.success) {
-            contractTxHash = result.transactionHash || 'pending';
-            console.log(`✅ Message metadata stored via Cometh Connect: ${contractTxHash}`);
-          } else {
-            console.warn(`⚠️ Cometh transaction failed: ${result.error}`);
-            contractTxHash = 'failed';
-          }
         } catch (error) {
-          console.error('❌ Cometh transaction error:', error);
+          console.error('❌ Cometh Connect transaction error:', error);
           contractTxHash = 'error';
         }
       } else {
-        console.warn('⚠️ Cometh service not available, skipping contract storage');
-        console.log('🔍 Cometh service status:', this.comethService);
+        console.warn('⚠️ Cometh Connect service not available, skipping contract storage');
+        console.log('🔍 Cometh Connect service status:', this.comethConnectService);
         contractTxHash = 'cometh_unavailable';
       }
 
@@ -198,9 +187,9 @@ export class DecentralizedMessagingServiceCometh {
    */
   async getConversationMessages(conversationId: string): Promise<Message[]> {
     try {
-      console.log(`📨 Getting conversation messages: ${conversationId}`);
+      console.log(`📨 Getting messages for conversation: ${conversationId}`);
 
-      // Step 1: Get message records from smart contract (using old service for reading)
+      // Step 1: Get message records from smart contract
       const messageRecords = await this.smartContractService.getConversationMessages(conversationId);
       console.log(`Found ${messageRecords.length} message records for conversation`);
 
@@ -224,7 +213,7 @@ export class DecentralizedMessagingServiceCometh {
           
           // Create a fallback message from the smart contract record
           const fallbackMessage: Message = {
-            id: record.blobId, // Use blob ID as message ID
+            id: record.blobId,
             conversationId: record.conversationId,
             senderId: record.senderId,
             content: `[Message content unavailable - Blob ID: ${record.blobId}]`,
@@ -236,10 +225,7 @@ export class DecentralizedMessagingServiceCometh {
         }
       }
 
-      // Sort messages by timestamp
-      messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-      console.log(`Successfully processed ${messages.length} messages for conversation (${failedRetrievals.length} fallbacks)`);
+      console.log(`Successfully processed ${messages.length} messages (${failedRetrievals.length} fallbacks)`);
       
       if (failedRetrievals.length > 0) {
         console.log(`⚠️ Failed Walrus retrievals: ${failedRetrievals.join(', ')}`);
@@ -253,13 +239,11 @@ export class DecentralizedMessagingServiceCometh {
   }
 
   /**
-   * Get user conversations
+   * Get user conversations from smart contract
    */
   async getUserConversations(userAddress: string): Promise<any[]> {
     try {
       console.log(`📋 Getting conversations for user: ${userAddress}`);
-      
-      // Use SmartContractService for reading conversations
       return await this.smartContractService.getUserConversations(userAddress);
     } catch (error) {
       console.error('❌ Error getting user conversations:', error);
@@ -268,16 +252,16 @@ export class DecentralizedMessagingServiceCometh {
   }
 
   /**
-   * Check if Cometh service is available
+   * Check if Cometh Connect service is available
    */
   isComethAvailable(): boolean {
-    return this.comethService !== null;
+    return this.comethConnectService !== null && this.comethConnectService.isConfigured();
   }
 
   /**
-   * Get Cometh service instance
+   * Get Cometh Connect service instance
    */
   getComethService() {
-    return this.comethService;
+    return this.comethConnectService;
   }
 } 

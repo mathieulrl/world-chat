@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getComethConfig } from '@/config/cometh';
-import { getComethService } from '@/services/comethService';
+import { getComethConnectService } from '@/services/comethConnectService';
 
 interface LogEntry {
   timestamp: string;
@@ -65,7 +65,6 @@ export const DebugPanel: React.FC = () => {
       // First, log environment variables
       console.log('🔍 Environment Variables Check:');
       console.log('VITE_COMETH_API_KEY:', import.meta.env.VITE_COMETH_API_KEY ? '✅ Set' : '❌ Missing');
-      console.log('VITE_SAFE_ADDRESS:', import.meta.env.VITE_SAFE_ADDRESS ? '✅ Set' : '❌ Missing');
       console.log('VITE_4337_BUNDLER_URL:', import.meta.env.VITE_4337_BUNDLER_URL || 'Using default');
       console.log('VITE_4337_PAYMASTER_URL:', import.meta.env.VITE_4337_PAYMASTER_URL || 'Using default');
       console.log('VITE_ENTRYPOINT_ADDRESS:', import.meta.env.VITE_ENTRYPOINT_ADDRESS || 'Using default');
@@ -73,31 +72,22 @@ export const DebugPanel: React.FC = () => {
       // Check for missing required variables
       const missingVars = [];
       if (!import.meta.env.VITE_COMETH_API_KEY) missingVars.push('VITE_COMETH_API_KEY');
-      if (!import.meta.env.VITE_SAFE_ADDRESS) missingVars.push('VITE_SAFE_ADDRESS');
       
       if (missingVars.length > 0) {
         console.log('❌ Missing required environment variables:', missingVars.join(', '));
         console.log('📋 Add these to your .env file:');
         console.log('VITE_COMETH_API_KEY=your_cometh_api_key');
-        console.log('VITE_SAFE_ADDRESS=your_worldcoin_safe_address');
         console.log('VITE_4337_BUNDLER_URL=https://bundler.cometh.io/480');
         console.log('VITE_4337_PAYMASTER_URL=https://paymaster.cometh.io/480');
         console.log('VITE_ENTRYPOINT_ADDRESS=0x0000000071727De22E5E9d8BAf0edAc6f37da032');
       }
       
       const config = getComethConfig();
-      const service = getComethService(config);
+      const service = getComethConnectService();
       
       setComethStatus({
-        config: {
-          apiKey: config.apiKey ? '✅ Set' : '❌ Missing',
-          safeAddress: config.safeAddress,
-          bundlerUrl: config.bundlerUrl,
-          paymasterUrl: config.paymasterUrl,
-          entryPointAddress: config.entryPointAddress,
-        },
-        service: service,
-        initialized: service.isServiceInitialized(),
+        config: service.getConfig(),
+        initialized: service.isConfigured(),
         missingVars: missingVars,
       });
     } catch (error) {
@@ -110,27 +100,19 @@ export const DebugPanel: React.FC = () => {
   // Test Cometh transaction
   const testComethTransaction = async () => {
     try {
-      const config = getComethConfig();
-      const service = getComethService(config);
+      const service = getComethConnectService();
       
-      console.log('🧪 Testing Cometh transaction...');
+      console.log('🧪 Testing Cometh Connect service...');
+      console.log('✅ Service configured:', service.isConfigured());
+      console.log('📊 Config:', service.getConfig());
       
-      const result = await service.storeMessageMetadata(
-        'test-blob-id',
-        'test-conversation',
-        'text',
-        '0x1234567890123456789012345678901234567890'
-      );
+      // Test that we can get the provider config
+      const providerConfig = service.getConnectProviderConfig();
+      console.log('🔧 Provider config:', providerConfig);
       
-      console.log('📊 Test transaction result:', result);
-      
-      if (result.success) {
-        console.log('✅ Test transaction successful!');
-      } else {
-        console.log('❌ Test transaction failed:', result.error);
-      }
+      console.log('✅ Cometh Connect service test successful!');
     } catch (error) {
-      console.error('❌ Test transaction error:', error);
+      console.error('❌ Cometh Connect service test error:', error);
     }
   };
 
@@ -173,7 +155,7 @@ export const DebugPanel: React.FC = () => {
                     🔍 Check Cometh
                   </Button>
                   <Button size="sm" onClick={testComethTransaction}>
-                    🧪 Test TX
+                    🧪 Test Service
                   </Button>
                   <Button size="sm" variant="outline" onClick={clearLogs}>
                     🗑️ Clear
@@ -187,13 +169,12 @@ export const DebugPanel: React.FC = () => {
                   {/* Cometh Status */}
                   {comethStatus && (
                     <div className="p-2 bg-gray-100 rounded text-xs">
-                      <div className="font-semibold mb-1">Cometh Status:</div>
+                      <div className="font-semibold mb-1">Cometh Connect Status:</div>
                       {comethStatus.error ? (
                         <div className="text-red-600">{comethStatus.error}</div>
                       ) : (
                         <div>
                           <div>API Key: {comethStatus.config.apiKey}</div>
-                          <div>Safe: {comethStatus.config.safeAddress}</div>
                           <div>Bundler: {comethStatus.config.bundlerUrl}</div>
                           <div>Paymaster: {comethStatus.config.paymasterUrl}</div>
                           <div>EntryPoint: {comethStatus.config.entryPointAddress}</div>
