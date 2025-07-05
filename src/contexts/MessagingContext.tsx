@@ -71,17 +71,22 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
 
   const initializeApp = async () => {
     try {
+      console.log('🚀 Initializing app...');
       setIsLoading(true);
       
       // Check if World App is installed
       if (!worldcoinService.isInstalled()) {
+        console.error('❌ World App is not installed');
         setError('World App is not installed. Please install World App to use this messaging app.');
         return;
       }
+      console.log('✅ World App is installed');
 
       // Get current user
+      console.log('👤 Getting current user...');
       const user = await worldcoinService.getCurrentUser();
       if (user) {
+        console.log('✅ Current user found:', user);
         const currentUserData: User = {
           id: user.address,
           username: user.username || 'Unknown User',
@@ -91,27 +96,34 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         setCurrentUser(currentUserData);
         
         // Load conversations after user is set
+        console.log('💬 Loading conversations for user:', currentUserData.address);
         await loadConversations(currentUserData);
       } else {
+        console.error('❌ Failed to get current user');
         setError('Failed to get current user');
       }
     } catch (err) {
+      console.error('❌ App initialization failed:', err);
       setError(err instanceof Error ? err.message : 'Failed to initialize app');
     } finally {
       setIsLoading(false);
+      console.log('✅ App initialization complete');
     }
   };
 
   const loadConversations = async (user?: User) => {
     try {
+      console.log('📋 Loading conversations...');
       const userToUse = user || currentUser;
       if (!userToUse) {
-        console.warn('No user available to load conversations');
+        console.warn('⚠️ No user available to load conversations');
         return;
       }
 
+      console.log('🔍 Getting conversations for address:', userToUse.address);
       // Get real conversations from decentralized service
       const realConversations = await decentralizedService.getUserConversations(userToUse.address);
+      console.log('📥 Raw conversations from service:', realConversations);
       
       // Convert to Conversation format expected by the UI
       const conversations: Conversation[] = realConversations.map((conv: any) => ({
@@ -127,8 +139,10 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         updatedAt: conv.updatedAt,
       }));
       
+      console.log('✅ Processed conversations:', conversations);
       setConversations(conversations);
     } catch (err) {
+      console.error('❌ Failed to load conversations:', err);
       setError(err instanceof Error ? err.message : 'Failed to load conversations');
     }
   };
@@ -149,11 +163,12 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
 
   const sendMessage = async (content: string, conversationId: string) => {
     if (!currentUser) {
-      console.error('No current user available');
+      console.error('❌ No current user available for sending message');
       return;
     }
 
     try {
+      console.log('💬 Sending message:', { content, conversationId, sender: currentUser.id });
       const message: Message = {
         id: crypto.randomUUID(),
         conversationId,
@@ -163,13 +178,14 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
         messageType: 'text',
       };
 
+      console.log('📤 Storing message in decentralized system...');
       // Store in decentralized system (Walrus + Smart Contract)
       const { walrusResult, contractTxHash } = await decentralizedService.sendMessage(
         message,
         currentUser.address
       );
 
-      console.log(`Message sent! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
+      console.log(`✅ Message sent! Walrus Blob ID: ${walrusResult.blobId}, Contract TX: ${contractTxHash}`);
 
       // Update local state
       setMessages(prev => [...prev, message]);
@@ -182,7 +198,9 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
             : conv
         )
       );
+      console.log('✅ Message state updated successfully');
     } catch (err) {
+      console.error('❌ Failed to send message:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
     }
   };
