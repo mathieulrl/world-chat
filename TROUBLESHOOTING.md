@@ -11,25 +11,37 @@ Description: Transaction contains unrecognized contract address
 Contract: 0x063816286ae3312e759f80Afdb10C8879b30688D
 ```
 
-**Cause:** The smart contract is not registered with the MiniKit app.
+**Cause:** The smart contract is not registered with the MiniKit app OR the transaction format is incorrect.
 
 **Solutions:**
 
-#### Option A: Development Mode (Recommended)
-The app automatically handles this error in development mode by returning mock transaction success. This allows you to test the full flow without contract registration.
+#### Option A: Fix Transaction Format (Most Likely Issue)
+According to the [official MiniKit documentation](https://docs.world.org/mini-apps/commands/send-transaction#creating-a-transaction):
 
-#### Option B: Register Contract with MiniKit
-1. Open the World App
-2. Go to MiniKit settings
-3. Add contract address: `0x063816286ae3312e759f80Afdb10C8879b30688D`
-4. Select chain: Worldcoin Sepolia (4801)
-5. Confirm registration
+1. **Remove chainId from transaction object** - Chain configuration is handled by the World App
+2. **Use correct transaction format:**
+   ```typescript
+   const transaction = {
+     address: "0x...",
+     abi: [...],
+     functionName: "functionName",
+     args: [...],
+     value: "0x0" // Hex string
+   };
+   ```
+3. **Specify contract in Developer Portal:**
+   - Go to Developer Portal
+   - Configuration → Advanced
+   - Add contract address: `0x063816286ae3312e759f80Afdb10C8879b30688D`
+   - Select chain: Worldcoin Sepolia (4801)
+
+#### Option B: Development Mode (For Testing)
+The app automatically handles this error in development mode by returning mock transaction success.
 
 #### Option C: Alternative Transaction Methods
 - Use direct blockchain transactions with MetaMask
 - Implement custom wallet integration
 - Use Web3 providers like WalletConnect
-- Contact Worldcoin support for contract whitelisting
 
 ### 2. Walrus Storage Connection Issues
 

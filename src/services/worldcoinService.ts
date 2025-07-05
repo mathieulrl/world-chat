@@ -294,14 +294,15 @@ export class WorldcoinService {
         console.log(`   Continuing with transaction attempt...`);
       }
 
-      // Create the transaction request
+      // Create the transaction request according to MiniKit API specification
       const transaction = {
         address: transactionRequest.contractAddress,
         abi: transactionRequest.abi,
         functionName: transactionRequest.functionName,
         args: transactionRequest.args,
         value: transactionRequest.value ? `0x${transactionRequest.value.toString(16)}` : '0x0',
-        chainId: 4801, // Worldcoin Sepolia
+        // Note: chainId is not part of the official MiniKit API
+        // Chain configuration is handled by the World App
       };
 
       console.log(`Transaction details:`, {
@@ -310,12 +311,13 @@ export class WorldcoinService {
         args: transaction.args,
         value: transaction.value,
         valueType: typeof transaction.value,
-        chainId: transaction.chainId,
       });
 
       // Execute the transaction using MiniKit
       const result = await MiniKit.commandsAsync.sendTransaction({
         transaction: [transaction],
+        // Optional: formatPayload defaults to true, but can be set to false if needed
+        formatPayload: true,
       });
 
       console.log(`✅ Contract transaction successful!`);
