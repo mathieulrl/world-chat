@@ -1,8 +1,23 @@
 import { WalrusStorageResult } from './walrusStorageService';
 import { messagingContractAbi } from '../abis/messagingContractAbi';
 import { createPublicClient, http } from 'viem';
-import { sepolia } from 'viem/chains';
 import { WorldcoinService } from './worldcoinService';
+
+// Define custom chain for chainId 4801
+const customChain = {
+  id: 4801,
+  name: 'Custom Chain',
+  network: 'custom',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: { http: ['https://sepolia.infura.io/v3/e34629cc701f45ffbdb1d83ae332b4cf'] },
+    public: { http: ['https://sepolia.infura.io/v3/e34629cc701f45ffbdb1d83ae332b4cf'] },
+  },
+} as const;
 
 export interface MessageRecord {
   blobId: string;
@@ -28,19 +43,12 @@ export class SmartContractService {
   constructor(config: SmartContractConfig) {
     this.config = config;
     
-    // Get Infura ID from environment variable
-    const infuraId = "e34629cc701f45ffbdb1d83ae332b4cf"
-    
-    if (!infuraId) {
-      console.warn('⚠️ INFURA_ID not found in environment variables. Please add INFURA_ID to your .env file.');
-    }
-    
     // Initialize viem client for reading from contract
-    const rpcUrl = config.rpcUrl || `https://sepolia.infura.io/v3/${infuraId || 'YOUR_INFURA_KEY'}`;
+    const rpcUrl = config.rpcUrl || 'https://sepolia.infura.io/v3/e34629cc701f45ffbdb1d83ae332b4cf';
     console.log(`Using RPC URL: ${rpcUrl}`);
     
     this.publicClient = createPublicClient({
-      chain: sepolia,
+      chain: customChain,
       transport: http(rpcUrl),
     });
 
@@ -48,6 +56,7 @@ export class SmartContractService {
     this.worldcoinService = WorldcoinService.getInstance();
 
     console.log(`SmartContractService initialized with contract: ${config.contractAddress}`);
+    console.log(`Chain ID: 4801`);
     console.log(`RPC URL: ${rpcUrl}`);
   }
 
