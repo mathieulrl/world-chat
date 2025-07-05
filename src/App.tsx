@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MiniKitProvider } from '@worldcoin/minikit-js/minikit-provider';
 import { MessagingProvider } from "./contexts/MessagingContext";
+import { DebugPanel } from "./components/DebugPanel";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
@@ -32,6 +33,7 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+            <DebugPanel />
           </MessagingProvider>
         </MiniKitProvider>
       </TooltipProvider>

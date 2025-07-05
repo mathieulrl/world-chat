@@ -1,51 +1,44 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { getComethConfig } from '@/config/cometh';
+import { getComethService } from '@/services/comethService';
 
 interface LogEntry {
-  id: string;
   timestamp: string;
-  level: 'log' | 'info' | 'warn' | 'error' | 'success';
+  level: 'info' | 'warn' | 'error' | 'success';
   message: string;
   data?: any;
 }
 
-interface DebugPanelProps {
-  isVisible: boolean;
-  onToggle: () => void;
-}
-
-export const DebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onToggle }) => {
+export const DebugPanel: React.FC = () => {
+  const [isVisible, setIsVisible] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [comethStatus, setComethStatus] = useState<any>(null);
 
+  // Capture console logs
   useEffect(() => {
-    // Override console methods to capture logs
     const originalLog = console.log;
-    const originalInfo = console.info;
     const originalWarn = console.warn;
     const originalError = console.error;
 
-    const addLog = (level: LogEntry['level'], ...args: any[]) => {
+    const addLog = (level: 'info' | 'warn' | 'error' | 'success', ...args: any[]) => {
       const message = args.map(arg => 
         typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
       ).join(' ');
       
-      const newLog: LogEntry = {
-        id: Date.now().toString(),
+      setLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
         level,
         message,
-        data: args.length > 1 ? args : undefined,
-      };
-      
-      setLogs(prev => [...prev.slice(-50), newLog]); // Keep last 50 logs
+        data: args.length > 1 ? args : undefined
+      }]);
     };
 
     console.log = (...args) => {
       originalLog(...args);
-      addLog('log', ...args);
-    };
-
-    console.info = (...args) => {
-      originalInfo(...args);
       addLog('info', ...args);
     };
 
@@ -59,72 +52,154 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onToggle }) =
       addLog('error', ...args);
     };
 
-    // Cleanup
     return () => {
       console.log = originalLog;
-      console.info = originalInfo;
       console.warn = originalWarn;
       console.error = originalError;
     };
   }, []);
 
+  // Check Cometh status
+  const checkComethStatus = async () => {
+    try {
+      const config = getComethConfig();
+      const service = getComethService(config);
+      
+      setComethStatus({
+        config: {
+          apiKey: config.apiKey ? '✅ Set' : '❌ Missing',
+          safeAddress: config.safeAddress,
+          bundlerUrl: config.bundlerUrl,
+          paymasterUrl: config.paymasterUrl,
+        },
+        service: service,
+        initialized: service.isServiceInitialized(),
+      });
+    } catch (error) {
+      setComethStatus({
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  // Test Cometh transaction
+  const testComethTransaction = async () => {
+    try {
+      const config = getComethConfig();
+      const service = getComethService(config);
+      
+      console.log('🧪 Testing Cometh transaction...');
+      
+      const result = await service.storeMessageMetadata(
+        'test-blob-id',
+        'test-conversation',
+        'text',
+        '0x1234567890123456789012345678901234567890'
+      );
+      
+      console.log('📊 Test transaction result:', result);
+      
+      if (result.success) {
+        console.log('✅ Test transaction successful!');
+      } else {
+        console.log('❌ Test transaction failed:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Test transaction error:', error);
+    }
+  };
+
+  // Clear logs
   const clearLogs = () => {
     setLogs([]);
   };
 
-  const getLevelColor = (level: LogEntry['level']) => {
+  // Get log level color
+  const getLogLevelColor = (level: string) => {
     switch (level) {
-      case 'error': return 'text-red-500';
-      case 'warn': return 'text-yellow-500';
-      case 'success': return 'text-green-500';
-      case 'info': return 'text-blue-500';
-      default: return 'text-gray-500';
+      case 'error': return 'bg-red-500';
+      case 'warn': return 'bg-yellow-500';
+      case 'success': return 'bg-green-500';
+      default: return 'bg-blue-500';
     }
   };
 
-  if (!isVisible) return null;
-
   return (
-    <div className="fixed bottom-4 right-4 w-96 h-64 bg-black bg-opacity-90 text-white rounded-lg shadow-lg z-50">
-      <div className="flex justify-between items-center p-2 border-b border-gray-600">
-        <h3 className="text-sm font-bold">Debug Panel</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={clearLogs}
-            className="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded"
-          >
-            Clear
-          </button>
-          <button
-            onClick={onToggle}
-            className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded"
-          >
-            Hide
-          </button>
-        </div>
-      </div>
-      
-      <div className="h-56 overflow-y-auto p-2 text-xs font-mono">
-        {logs.length === 0 ? (
-          <div className="text-gray-400">No logs yet...</div>
-        ) : (
-          logs.map((log) => (
-            <div key={log.id} className="mb-1">
-              <span className="text-gray-400">[{log.timestamp}]</span>
-              <span className={`ml-1 ${getLevelColor(log.level)}`}>
-                {log.message}
-              </span>
-              {log.data && (
-                <pre className="mt-1 text-xs text-gray-300 overflow-x-auto">
-                  {JSON.stringify(log.data, null, 2)}
-                </pre>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-};
+    <>
+      {/* Toggle Button */}
+      <Button
+        onClick={() => setIsVisible(!isVisible)}
+        variant="outline"
+        size="sm"
+        className="fixed bottom-4 right-4 z-50"
+      >
+        {isVisible ? '🔽 Hide Logs' : '📊 Show Logs'}
+      </Button>
 
-export default DebugPanel; 
+      {/* Debug Panel */}
+      {isVisible && (
+        <div className="fixed bottom-16 right-4 w-96 h-96 z-40">
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex justify-between items-center">
+                <span>Debug Panel</span>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={checkComethStatus}>
+                    🔍 Check Cometh
+                  </Button>
+                  <Button size="sm" onClick={testComethTransaction}>
+                    🧪 Test TX
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={clearLogs}>
+                    🗑️ Clear
+                  </Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-2">
+              <ScrollArea className="h-80">
+                <div className="space-y-2">
+                  {/* Cometh Status */}
+                  {comethStatus && (
+                    <div className="p-2 bg-gray-100 rounded text-xs">
+                      <div className="font-semibold mb-1">Cometh Status:</div>
+                      {comethStatus.error ? (
+                        <div className="text-red-600">{comethStatus.error}</div>
+                      ) : (
+                        <div>
+                          <div>API Key: {comethStatus.config.apiKey}</div>
+                          <div>Safe: {comethStatus.config.safeAddress}</div>
+                          <div>Initialized: {comethStatus.initialized ? '✅' : '❌'}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Logs */}
+                  {logs.map((log, index) => (
+                    <div key={index} className="text-xs font-mono">
+                      <div className="flex items-center gap-2">
+                        <Badge className={`w-12 text-center ${getLogLevelColor(log.level)}`}>
+                          {log.level.toUpperCase()}
+                        </Badge>
+                        <span className="text-gray-500">{log.timestamp}</span>
+                      </div>
+                      <div className="ml-14 mt-1 break-all">
+                        {log.message}
+                        {log.data && (
+                          <pre className="mt-1 text-xs bg-gray-100 p-1 rounded overflow-auto">
+                            {JSON.stringify(log.data, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </>
+  );
+}; 

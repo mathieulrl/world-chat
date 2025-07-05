@@ -57,13 +57,17 @@ export class DecentralizedMessagingServiceCometh {
       let contractTxHash = 'pending';
       
       if (this.comethService) {
+        console.log('🔧 Cometh service is available, attempting transaction...');
         try {
+          console.log('📝 Calling storeMessageMetadata on Cometh service...');
           const result = await this.comethService.storeMessageMetadata(
             walrusResult.blobId,
             message.conversationId,
             message.messageType,
             senderAddress
           );
+          
+          console.log('📊 Cometh transaction result:', result);
           
           if (result.success) {
             contractTxHash = result.transactionHash || 'pending';
@@ -78,6 +82,7 @@ export class DecentralizedMessagingServiceCometh {
         }
       } else {
         console.warn('⚠️ Cometh service not available, skipping contract storage');
+        console.log('🔍 Cometh service status:', this.comethService);
         contractTxHash = 'cometh_unavailable';
       }
 

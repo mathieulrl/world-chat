@@ -149,6 +149,9 @@ export class ComethService {
       console.log(`   Message Type: ${messageType}`);
       console.log(`   Sender: ${senderAddress}`);
 
+      // Contract address for message storage
+      const contractAddress = '0x34bF1A2460190e60e33309BF8c54D9A7c9eCB4B8';
+
       // Encode the function call
       const calldata = encodeFunctionData({
         abi: messagingContractAbi,
@@ -161,8 +164,11 @@ export class ComethService {
         ],
       });
 
-      // Send transaction
-      return await this.sendTransaction(this.config.safeAddress, calldata);
+      console.log(`📄 Sending transaction to contract: ${contractAddress}`);
+      console.log(`📄 Calldata: ${calldata}`);
+
+      // Send transaction to the contract address, not the Safe address
+      return await this.sendTransaction(contractAddress, calldata);
     } catch (error) {
       console.error('❌ Failed to store message metadata:', error);
       return {
