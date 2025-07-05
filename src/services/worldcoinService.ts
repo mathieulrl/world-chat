@@ -1,7 +1,6 @@
 import { PaymentRequest } from '../types/messaging';
 import { initiatePayment, confirmPayment } from '../api/initiate-payment';
 import { createWalletClient, http } from 'viem';
-import { sepolia } from 'viem/chains';
 import { MiniKit } from '@worldcoin/minikit-js';
 
 // Token conversion utility
@@ -32,14 +31,30 @@ export class WorldcoinService {
       console.warn('⚠️ INFURA_ID not found in environment variables. Please add INFURA_ID to your .env file.');
     }
     
-    // Initialize wallet client for contract transactions
+    // Define Worldcoin Sepolia chain configuration
+    const worldcoinSepolia = {
+      id: 4801,
+      name: 'Worldcoin Sepolia',
+      network: 'worldcoin-sepolia',
+      nativeCurrency: {
+        decimals: 18,
+        name: 'Ether',
+        symbol: 'ETH',
+      },
+      rpcUrls: {
+        default: { http: ['https://worldchain-sepolia.drpc.org'] },
+        public: { http: ['https://worldchain-sepolia.drpc.org'] },
+      },
+    } as const;
+    
+    // Initialize wallet client for contract transactions on Worldcoin Sepolia
     this.walletClient = createWalletClient({
-      chain: sepolia,
-      transport: http(`https://sepolia.infura.io/v3/${infuraId || 'YOUR_INFURA_KEY'}`),
+      chain: worldcoinSepolia,
+      transport: http(`https://worldchain-sepolia.drpc.org`),
     });
 
-    console.log('WorldcoinService initialized with Infura ID:', infuraId)
-
+    console.log('WorldcoinService initialized for Worldcoin Sepolia (chainId 4801)');
+    console.log('RPC URL: https://worldchain-sepolia.drpc.org');
   }
 
   public static getInstance(): WorldcoinService {
@@ -59,7 +74,14 @@ export class WorldcoinService {
       // Set the app ID for MiniKit
       MiniKit.appId = 'app_633eda004e32e457ef84472c6ef7714c';
       
+      // Note: MiniKit chain configuration is handled by the World App
+      // The app should be configured to support Worldcoin Sepolia (chainId 4801)
+      console.log('Configuring MiniKit for Worldcoin Sepolia (chainId 4801)...');
+      console.log('Note: Chain configuration is handled by World App');
+      
       console.log('✅ Worldcoin MiniKit initialized successfully! (Mock mode)');
+      console.log(`   App ID: ${MiniKit.appId}`);
+      console.log(`   Expected Chain: Worldcoin Sepolia (4801)`);
       return true;
       
     } catch (error) {
@@ -274,6 +296,7 @@ export class WorldcoinService {
         functionName: transactionRequest.functionName,
         args: transactionRequest.args,
         value: transactionRequest.value ? `0x${transactionRequest.value.toString(16)}` : '0x0',
+        chainId: 4801, // Worldcoin Sepolia
       };
 
       console.log(`Transaction details:`, {
@@ -282,6 +305,7 @@ export class WorldcoinService {
         args: transaction.args,
         value: transaction.value,
         valueType: typeof transaction.value,
+        chainId: transaction.chainId,
       });
 
       // Execute the transaction using MiniKit
