@@ -4,6 +4,10 @@
 
 import { SmartContractService } from '../services/smartContractService';
 import { DecentralizedMessagingService } from '../services/decentralizedMessagingService';
+import { testSmartContractReading } from './test-smart-contract-reading';
+import { testContractAccessibility } from './test-contract-accessibility';
+import { runAllTests } from './run-tests';
+import { testMiniKitTransaction } from './test-minikit-transaction';
 
 // Make these functions available globally for browser console debugging
 declare global {
@@ -14,6 +18,10 @@ declare global {
     debugUser: (userAddress: string) => Promise<void>;
     quickDebug: () => Promise<void>;
     testMessageLoading: () => Promise<void>;
+    testSmartContractReading: () => Promise<void>;
+    testContractAccessibility: () => Promise<void>;
+    runAllTests: () => Promise<any>;
+    testMiniKitTransaction: () => Promise<void>;
   }
 }
 
@@ -314,6 +322,18 @@ export function setupGlobalTestFunctions() {
     console.log('=================================');
   };
 
+  // Global test function for smart contract reading
+  window.testSmartContractReading = testSmartContractReading;
+
+  // Global test function for contract accessibility
+  window.testContractAccessibility = testContractAccessibility;
+
+  // Global test function to run all tests
+  window.runAllTests = runAllTests;
+
+  // Global test function for MiniKit transaction
+  window.testMiniKitTransaction = testMiniKitTransaction;
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
@@ -322,4 +342,8 @@ export function setupGlobalTestFunctions() {
   console.log('- debugUser(userAddress)');
   console.log('- quickDebug()');
   console.log('- testMessageLoading()');
+  console.log('- testSmartContractReading()');
+  console.log('- testContractAccessibility()');
+  console.log('- runAllTests() - Run all diagnostic tests');
+  console.log('- testMiniKitTransaction() - Test MiniKit transaction sending');
 }

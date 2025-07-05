@@ -294,78 +294,93 @@ export class WorldcoinService {
         console.log(`   Continuing with transaction attempt...`);
       }
 
+      // Extract only the storeMessage function ABI from the full contract ABI
+      const storeMessageAbi = transactionRequest.abi.find((item: any) => 
+        item.type === 'function' && item.name === 'storeMessage'
+      );
+
+      if (!storeMessageAbi) {
+        console.error('❌ storeMessage function not found in ABI');
+        return {
+          success: false,
+          error: 'storeMessage function not found in contract ABI',
+        };
+      }
+
       // Create the transaction request according to MiniKit API specification
       const transaction = {
         address: transactionRequest.contractAddress,
-        abi: transactionRequest.abi,
+        abi: [storeMessageAbi], // Only include the function ABI
         functionName: transactionRequest.functionName,
         args: transactionRequest.args,
-        value: transactionRequest.value ? `0x${transactionRequest.value.toString(16)}` : '0x0',
-        // Note: chainId is not part of the official MiniKit API
-        // Chain configuration is handled by the World App
+        // Only include value if sending ETH
+        ...(transactionRequest.value && transactionRequest.value > 0n && {
+          value: `0x${transactionRequest.value.toString(16)}`
+        }),
       };
 
       console.log(`Transaction details:`, {
         address: transaction.address,
         functionName: transaction.functionName,
         args: transaction.args,
-        value: transaction.value,
-        valueType: typeof transaction.value,
+        abi: transaction.abi,
+        value: transaction.value || '0x0',
       });
 
       // Execute the transaction using MiniKit
+      console.log(`📤 Sending transaction via MiniKit...`);
       const result = await MiniKit.commandsAsync.sendTransaction({
         transaction: [transaction],
-        // Optional: formatPayload defaults to true, but can be set to false if needed
-        formatPayload: true,
+        formatPayload: true, // Let MiniKit format the payload
       });
 
-      console.log(`✅ Contract transaction successful!`);
-      console.log(`  Result:`, result);
+      console.log(`📥 MiniKit response:`, result);
       
       if (result.finalPayload.status === 'success') {
-        console.log(`  Transaction Hash: ${result.finalPayload.transaction_id}`);
+        const transactionId = result.finalPayload.transaction_id;
+        console.log(`✅ MiniKit transaction successful!`);
+        console.log(`  Transaction ID: ${transactionId}`);
         console.log(`  Status: ${result.finalPayload.status}`);
 
-        return {
-          success: true,
-          transactionHash: result.finalPayload.transaction_id,
-        };
+        // Wait for transaction confirmation
+        console.log(`⏳ Waiting for transaction confirmation...`);
+        const transactionHash = await this.waitForTransactionConfirmation(transactionId);
+        
+        if (transactionHash) {
+          console.log(`✅ Transaction confirmed on-chain!`);
+          console.log(`  Transaction Hash: ${transactionHash}`);
+          return {
+            success: true,
+            transactionHash: transactionHash,
+          };
+        } else {
+          console.log(`⚠️ Transaction ID received but hash not available yet`);
+          return {
+            success: true,
+            transactionHash: transactionId, // Return ID as fallback
+          };
+        }
       } else {
-        console.log(`  Error: ${result.finalPayload.error_code}`);
-        console.log(`  Error details:`, result.finalPayload);
+        console.log(`❌ MiniKit transaction failed:`);
+        console.log(`  Error Code: ${result.finalPayload.error_code}`);
+        console.log(`  Error Details:`, result.finalPayload);
         
-        // Check if we're in development mode
-        const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-        
-        // For real transactions, we need to register the contract with MiniKit
-        console.log(`⚠️ MiniKit returned invalid_contract error. This means:`);
-        console.log(`   - Contract ${transactionRequest.contractAddress} is not registered with MiniKit`);
-        console.log(`   - You need to register the contract in the Worldcoin Developer Portal`);
-        console.log(`   - Or use a different transaction method`);
-        
-        // Use the contract registration utility for detailed analysis
-        const contractRegistration = MiniKitContractRegistration.getInstance();
-        contractRegistration.logErrorAnalysis(result.finalPayload, transactionRequest.contractAddress);
-        
-        // Check contract registration status
-        const registrationInfo = await contractRegistration.checkContractRegistration(
-          transactionRequest.contractAddress
-        );
-        
-        // Log registration guidance
-        const guidance = contractRegistration.getRegistrationGuidance(transactionRequest.contractAddress);
-        console.log(`📋 Registration Guidance:`);
-        guidance.forEach(line => console.log(`   ${line}`));
-        
-        // Log alternative methods
-        const alternatives = contractRegistration.getAlternativeMethods();
-        console.log(`🔄 Alternative Methods:`);
-        alternatives.forEach(line => console.log(`   ${line}`));
+        // Handle specific error cases
+        if (result.finalPayload.error_code === 'invalid_contract') {
+          console.log(`⚠️ Contract not registered with MiniKit`);
+          console.log(`   Contract: ${transactionRequest.contractAddress}`);
+          console.log(`   Please register the contract in the Worldcoin Developer Portal`);
+        } else if (result.finalPayload.error_code === 'simulation_failed') {
+          console.log(`⚠️ Transaction simulation failed`);
+          const debugUrl = (result.finalPayload as any).debug_url;
+          if (debugUrl) {
+            console.log(`   Debug URL: ${debugUrl}`);
+          }
+        }
         
         return {
           success: false,
-          error: `Contract ${transactionRequest.contractAddress} not registered with MiniKit app. Please register the contract in the Worldcoin Developer Portal or use an alternative transaction method.`,
+          error: `MiniKit error: ${result.finalPayload.error_code}`,
         };
       }
 
@@ -375,6 +390,44 @@ export class WorldcoinService {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  /**
+   * Wait for transaction confirmation using transaction ID
+   */
+  private async waitForTransactionConfirmation(transactionId: string): Promise<string | null> {
+    try {
+      console.log(`🔍 Checking transaction status for ID: ${transactionId}`);
+      
+      // Poll the Worldcoin API for transaction status
+      const response = await fetch(
+        `https://developer.worldcoin.org/api/v2/minikit/transaction/${transactionId}?app_id=${MiniKit.appId}&type=transaction`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        console.log(`⚠️ Failed to check transaction status: ${response.status}`);
+        return null;
+      }
+
+      const transaction = await response.json();
+      console.log(`📊 Transaction status:`, transaction);
+
+      if (transaction.transactionStatus === 'confirmed' && transaction.transactionHash) {
+        return transaction.transactionHash;
+      } else if (transaction.transactionStatus === 'failed') {
+        console.log(`❌ Transaction failed on-chain`);
+        return null;
+      } else {
+        console.log(`⏳ Transaction still pending: ${transaction.transactionStatus}`);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error checking transaction status:', error);
+      return null;
     }
   }
 
