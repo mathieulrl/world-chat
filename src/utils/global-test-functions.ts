@@ -13,6 +13,7 @@ declare global {
     testConversationMessages: (conversationId: string) => Promise<void>;
     debugUser: (userAddress: string) => Promise<void>;
     quickDebug: () => Promise<void>;
+    testMessageLoading: () => Promise<void>;
   }
 }
 
@@ -227,6 +228,92 @@ export function setupGlobalTestFunctions() {
     console.log('=======================');
   };
 
+  // Global test function for message loading
+  window.testMessageLoading = async () => {
+    console.log('🧪 Testing Message Loading');
+    console.log('===========================');
+    
+    const testUserAddress = '0x582be5da7d06b2bf6d89c5b4499491c5990fafe4';
+    
+    console.log(`\n🔍 Testing message loading for user: ${testUserAddress}`);
+    
+    try {
+      // Step 1: Check smart contract for message records
+      console.log('\n📊 Step 1: Checking smart contract for message records...');
+      const messageRecords = await smartContractService.getMessageHistory(testUserAddress);
+      console.log(`✅ Found ${messageRecords.length} message records in smart contract`);
+      
+      if (messageRecords.length > 0) {
+        console.log('📝 Sample message record:', {
+          blobId: messageRecords[0].blobId,
+          conversationId: messageRecords[0].conversationId,
+          messageType: messageRecords[0].messageType,
+          timestamp: messageRecords[0].timestamp,
+        });
+        
+        // Step 2: Try to retrieve each message from Walrus
+        console.log('\n📨 Step 2: Testing Walrus retrieval for each message...');
+        for (let i = 0; i < Math.min(messageRecords.length, 3); i++) {
+          const record = messageRecords[i];
+          console.log(`\n  Testing message ${i + 1}: ${record.blobId}`);
+          
+          try {
+            const retrievedMessage = await decentralizedService.retrieveMessage(record.blobId);
+            console.log(`  ✅ Successfully retrieved message ${i + 1}:`, {
+              id: retrievedMessage.id,
+              content: retrievedMessage.content.substring(0, 50) + '...',
+              conversationId: retrievedMessage.conversationId,
+              messageType: retrievedMessage.messageType,
+              timestamp: retrievedMessage.timestamp,
+            });
+          } catch (error) {
+            console.log(`  ❌ Failed to retrieve message ${i + 1}: ${error.message}`);
+          }
+        }
+      }
+      
+      // Step 3: Test decentralized service message history
+      console.log('\n📨 Step 3: Testing decentralized service message history...');
+      try {
+        const messageHistory = await decentralizedService.getMessageHistory(testUserAddress);
+        console.log(`✅ Decentralized service returned ${messageHistory.length} messages`);
+        
+        if (messageHistory.length > 0) {
+          console.log('📝 Sample message from decentralized service:', {
+            id: messageHistory[0].id,
+            content: messageHistory[0].content.substring(0, 50) + '...',
+            conversationId: messageHistory[0].conversationId,
+            messageType: messageHistory[0].messageType,
+            timestamp: messageHistory[0].timestamp,
+          });
+        }
+      } catch (error) {
+        console.log(`❌ Decentralized service failed: ${error.message}`);
+      }
+      
+      // Step 4: Summary
+      console.log('\n🎯 Summary:');
+      console.log('===========');
+      console.log(`📊 Smart Contract Records: ${messageRecords.length}`);
+      console.log(`📨 Decentralized Messages: ${messageRecords.length > 0 ? 'Testing...' : 'N/A'}`);
+      
+      if (messageRecords.length > 0) {
+        console.log('\n✅ Messages are stored in smart contract');
+        console.log('⚠️ Issue might be with Walrus retrieval');
+        console.log('💡 Recommendation: Check Walrus network connectivity');
+      } else {
+        console.log('\nℹ️ No messages found in smart contract');
+        console.log('💡 Recommendation: Send a test message first');
+      }
+      
+    } catch (error) {
+      console.error('❌ Test failed:', error);
+    }
+    
+    console.log('\n✅ Message loading test complete');
+    console.log('=================================');
+  };
+
   console.log('🔧 Global test functions setup complete!');
   console.log('Available functions:');
   console.log('- testMessagePersistence()');
@@ -234,4 +321,5 @@ export function setupGlobalTestFunctions() {
   console.log('- testConversationMessages(conversationId)');
   console.log('- debugUser(userAddress)');
   console.log('- quickDebug()');
+  console.log('- testMessageLoading()');
 }

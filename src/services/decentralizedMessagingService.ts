@@ -95,6 +95,7 @@ export class DecentralizedMessagingService {
 
   /**
    * Get message history from smart contract and retrieve content from Walrus
+   * With fallback to show message records even if Walrus retrieval fails
    */
   async getMessageHistory(userAddress: string): Promise<Message[]> {
     try {
@@ -104,19 +105,44 @@ export class DecentralizedMessagingService {
       const messageRecords = await this.smartContractService.getMessageHistory(userAddress);
       console.log(`Found ${messageRecords.length} message records in smart contract`);
 
+      if (messageRecords.length === 0) {
+        console.log('No message records found in smart contract');
+        return [];
+      }
+
       // Step 2: Retrieve message content from Walrus for each record
       const messages: Message[] = [];
+      const failedRetrievals: string[] = [];
+      
       for (const record of messageRecords) {
         try {
           const message = await this.walrusService.retrieveMessage(record.blobId);
           messages.push(message);
+          console.log(`✅ Successfully retrieved message: ${record.blobId}`);
         } catch (error) {
           console.error(`Failed to retrieve message with blob ID ${record.blobId}:`, error);
-          // Continue with other messages even if one fails
+          failedRetrievals.push(record.blobId);
+          
+          // Create a fallback message from the smart contract record
+          const fallbackMessage: Message = {
+            id: record.blobId, // Use blob ID as message ID
+            conversationId: record.conversationId,
+            senderId: record.senderId,
+            content: `[Message content unavailable - Blob ID: ${record.blobId}]`,
+            timestamp: new Date(record.timestamp),
+            messageType: record.messageType,
+          };
+          messages.push(fallbackMessage);
+          console.log(`📝 Created fallback message for blob ID: ${record.blobId}`);
         }
       }
 
-      console.log(`Successfully retrieved ${messages.length} messages from Walrus`);
+      console.log(`Successfully processed ${messages.length} messages (${failedRetrievals.length} fallbacks)`);
+      
+      if (failedRetrievals.length > 0) {
+        console.log(`⚠️ Failed Walrus retrievals: ${failedRetrievals.join(', ')}`);
+      }
+      
       return messages;
     } catch (error) {
       console.error('Error getting message history:', error);
@@ -126,6 +152,7 @@ export class DecentralizedMessagingService {
 
   /**
    * Get conversation messages from smart contract and retrieve content from Walrus
+   * With fallback to show message records even if Walrus retrieval fails
    */
   async getConversationMessages(conversationId: string): Promise<Message[]> {
     try {
@@ -135,22 +162,47 @@ export class DecentralizedMessagingService {
       const messageRecords = await this.smartContractService.getConversationMessages(conversationId);
       console.log(`Found ${messageRecords.length} message records for conversation`);
 
+      if (messageRecords.length === 0) {
+        console.log('No message records found for conversation');
+        return [];
+      }
+
       // Step 2: Retrieve message content from Walrus for each record
       const messages: Message[] = [];
+      const failedRetrievals: string[] = [];
+      
       for (const record of messageRecords) {
         try {
           const message = await this.walrusService.retrieveMessage(record.blobId);
           messages.push(message);
+          console.log(`✅ Successfully retrieved message: ${record.blobId}`);
         } catch (error) {
           console.error(`Failed to retrieve message with blob ID ${record.blobId}:`, error);
-          // Continue with other messages even if one fails
+          failedRetrievals.push(record.blobId);
+          
+          // Create a fallback message from the smart contract record
+          const fallbackMessage: Message = {
+            id: record.blobId, // Use blob ID as message ID
+            conversationId: record.conversationId,
+            senderId: record.senderId,
+            content: `[Message content unavailable - Blob ID: ${record.blobId}]`,
+            timestamp: new Date(record.timestamp),
+            messageType: record.messageType,
+          };
+          messages.push(fallbackMessage);
+          console.log(`📝 Created fallback message for blob ID: ${record.blobId}`);
         }
       }
 
       // Sort messages by timestamp
       messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
-      console.log(`Successfully retrieved ${messages.length} messages for conversation`);
+      console.log(`Successfully processed ${messages.length} messages for conversation (${failedRetrievals.length} fallbacks)`);
+      
+      if (failedRetrievals.length > 0) {
+        console.log(`⚠️ Failed Walrus retrievals: ${failedRetrievals.join(', ')}`);
+      }
+      
       return messages;
     } catch (error) {
       console.error('Error getting conversation messages:', error);
