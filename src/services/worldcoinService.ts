@@ -1,6 +1,6 @@
 import { PaymentRequest } from '../types/messaging';
 import { initiatePayment, confirmPayment } from '../api/initiate-payment';
-import { createWalletClient, http } from 'viem';
+import { createWalletClient, createPublicClient, http } from 'viem';
 import { MiniKit } from '@worldcoin/minikit-js';
 
 // Token conversion utility
@@ -21,6 +21,7 @@ export interface ContractTransactionRequest {
 export class WorldcoinService {
   private static instance: WorldcoinService;
   private walletClient: any;
+  private publicClient: any;
   private minikit: MiniKit | null = null;
   
   private constructor() {
@@ -46,6 +47,12 @@ export class WorldcoinService {
         public: { http: ['https://worldchain-sepolia.drpc.org'] },
       },
     } as const;
+    
+    // Initialize public client for reading contract data
+    this.publicClient = createPublicClient({
+      chain: worldcoinSepolia,
+      transport: http(`https://worldchain-sepolia.drpc.org`),
+    });
     
     // Initialize wallet client for contract transactions on Worldcoin Sepolia
     this.walletClient = createWalletClient({
@@ -273,7 +280,7 @@ export class WorldcoinService {
       console.log(`🔍 Verifying contract exists on chain...`);
       try {
         // Try to read a simple function to verify contract exists
-        await this.walletClient.readContract({
+        await this.publicClient.readContract({
           address: transactionRequest.contractAddress as `0x${string}`,
           abi: transactionRequest.abi,
           functionName: 'getUserMessageCount',
