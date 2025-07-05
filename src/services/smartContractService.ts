@@ -3,19 +3,19 @@ import { messagingContractAbi } from '../abis/messagingContractAbi';
 import { createPublicClient, http } from 'viem';
 import { WorldcoinService } from './worldcoinService';
 
-// Define custom chain for chainId 4801
-const customChain = {
+// Define Worldcoin Sepolia chain (chainId 4801)
+const worldcoinSepolia = {
   id: 4801,
-  name: 'Custom Chain',
-  network: 'custom',
+  name: 'Worldcoin Sepolia',
+  network: 'worldcoin-sepolia',
   nativeCurrency: {
     decimals: 18,
     name: 'Ether',
     symbol: 'ETH',
   },
   rpcUrls: {
-    default: { http: ['https://sepolia.infura.io/v3/e34629cc701f45ffbdb1d83ae332b4cf'] },
-    public: { http: ['https://sepolia.infura.io/v3/e34629cc701f45ffbdb1d83ae332b4cf'] },
+    default: { http: ['https://worldchain-sepolia.drpc.org'] },
+    public: { http: ['https://worldchain-sepolia.drpc.org'] },
   },
 } as const;
 
@@ -44,11 +44,11 @@ export class SmartContractService {
     this.config = config;
     
     // Initialize viem client for reading from contract
-    const rpcUrl = config.rpcUrl || 'https://sepolia.infura.io/v3/e34629cc701f45ffbdb1d83ae332b4cf';
+    const rpcUrl = config.rpcUrl || 'https://worldchain-sepolia.drpc.org';
     console.log(`Using RPC URL: ${rpcUrl}`);
     
     this.publicClient = createPublicClient({
-      chain: customChain,
+      chain: worldcoinSepolia,
       transport: http(rpcUrl),
     });
 
@@ -56,7 +56,7 @@ export class SmartContractService {
     this.worldcoinService = WorldcoinService.getInstance();
 
     console.log(`SmartContractService initialized with contract: ${config.contractAddress}`);
-    console.log(`Chain ID: 4801`);
+    console.log(`Chain ID: 4801 (Worldcoin Sepolia)`);
     console.log(`RPC URL: ${rpcUrl}`);
   }
 

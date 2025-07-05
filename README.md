@@ -77,8 +77,8 @@ A decentralized messaging application that combines **Walrus storage** with **sm
 
 4. **Start the development server**
    ```bash
-   npm run dev
-   ```
+npm run dev
+```
 
 5. **Open your browser**
    Navigate to `http://localhost:5173`

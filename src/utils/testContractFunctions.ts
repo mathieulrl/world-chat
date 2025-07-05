@@ -11,6 +11,7 @@ async function testContractFunctions() {
   const smartContractService = new SmartContractService({
     contractAddress: '0x063816286ae3312e759f80Afdb10C8879b30688D',
     network: 'testnet',
+    rpcUrl: 'https://worldchain-sepolia.drpc.org',
   });
 
   const decentralizedService = new DecentralizedMessagingService({

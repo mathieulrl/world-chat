@@ -11,6 +11,7 @@ export interface DecentralizedMessagingConfig {
   smartContract: {
     contractAddress: string;
     network: 'mainnet' | 'testnet';
+    rpcUrl: string;
   };
 }
 
