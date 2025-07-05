@@ -49,6 +49,11 @@ export class ComethTransactionService implements ComethTransactionService {
         throw new Error('Cometh Connect not available - sendTransactionAsync is not provided');
       }
 
+      // Validate that sendTransactionAsync is a function
+      if (typeof this.sendTransactionAsync !== 'function') {
+        throw new Error(`sendTransactionAsync is not a function: ${typeof this.sendTransactionAsync}`);
+      }
+
       console.log(`📝 Storing message metadata on contract via Cometh Connect...`);
       console.log(`   Blob ID: ${blobId}`);
       console.log(`   Conversation ID: ${conversationId}`);
@@ -81,11 +86,21 @@ export class ComethTransactionService implements ComethTransactionService {
       console.log(`📄 Sending transaction to contract: ${contractAddress}`);
       console.log(`📄 Calldata: ${calldata}`);
 
+      // Prepare transaction object in the correct format
+      const transactionObject = {
+        calls: [
+          {
+            to: contractAddress as `0x${string}`,
+            data: calldata as `0x${string}`,
+            value: BigInt(0),
+          },
+        ],
+      };
+
+      console.log(`📤 Transaction object:`, transactionObject);
+
       // Send transaction using Cometh Connect
-      const result = await this.sendTransactionAsync({
-        to: contractAddress as `0x${string}`,
-        data: calldata as `0x${string}`,
-      });
+      const result = await this.sendTransactionAsync(transactionObject);
 
       console.log(`✅ Transaction sent successfully via Cometh Connect:`, result);
       return {
@@ -133,8 +148,13 @@ export class ComethTransactionService implements ComethTransactionService {
       });
 
       const result = await this.sendTransactionAsync({
-        to: recipientAddress as `0x${string}`,
-        data: calldata as `0x${string}`,
+        calls: [
+          {
+            to: recipientAddress as `0x${string}`,
+            data: calldata as `0x${string}`,
+            value: BigInt(0),
+          },
+        ],
       });
 
       console.log(`✅ Payment sent successfully via Cometh Connect:`, result);
