@@ -272,21 +272,18 @@ export class WorldcoinService {
       // Verify contract exists on chain
       console.log(`🔍 Verifying contract exists on chain...`);
       try {
-        const code = await this.walletClient.getBytecode({ 
-          address: transactionRequest.contractAddress as `0x${string}` 
+        // Try to read a simple function to verify contract exists
+        await this.walletClient.readContract({
+          address: transactionRequest.contractAddress as `0x${string}`,
+          abi: transactionRequest.abi,
+          functionName: 'getUserMessageCount',
+          args: ['0x0000000000000000000000000000000000000000'], // Test with zero address
         });
-        if (code) {
-          console.log(`✅ Contract exists and has bytecode`);
-        } else {
-          console.log(`❌ Contract does not exist or has no bytecode`);
-          return {
-            success: false,
-            error: 'Contract not found on chain',
-          };
-        }
+        console.log(`✅ Contract exists and is accessible`);
       } catch (error) {
         console.log(`⚠️ Could not verify contract: ${error}`);
         console.log(`   This might be due to RPC issues or chain mismatch`);
+        console.log(`   Continuing with transaction attempt...`);
       }
 
       // Create the transaction request
